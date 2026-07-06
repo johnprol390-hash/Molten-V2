@@ -118,6 +118,39 @@ export async function queryPointsSummary() {
   return { points: user.points, bySource, achievements };
 }
 
+const HYPE_USD = 32;
+
+export async function queryPositions(userId: string) {
+  const positions = await prisma.position.findMany({
+    where: { userId, tokensHeld: { gt: 0 } },
+    orderBy: { updatedAt: "desc" },
+  });
+  const tokenIds = positions.map((p) => p.tokenId);
+  const tokens = await prisma.token.findMany({ where: { id: { in: tokenIds } } });
+  const byId = new Map(tokens.map((t) => [t.id, t]));
+  return positions.map((p) => {
+    const t = byId.get(p.tokenId);
+    const price = t?.price ?? 0;
+    const value = p.tokensHeld * price;
+    const costUsd = p.avgEntry * p.tokensHeld * HYPE_USD;
+    const unrealized = value - costUsd;
+    return {
+      tokenId: p.tokenId,
+      ticker: t?.ticker ?? "",
+      name: t?.name ?? "",
+      logo: t?.logo ?? "",
+      tokensHeld: p.tokensHeld,
+      avgEntryUsd: p.avgEntry * HYPE_USD,
+      value,
+      unrealized,
+      unrealizedPct: costUsd > 0 ? (unrealized / costUsd) * 100 : 0,
+      realized: p.realizedPnl,
+      boughtUsd: p.boughtHype * HYPE_USD,
+      soldUsd: p.soldHype * HYPE_USD,
+    };
+  });
+}
+
 export async function queryAdminStats() {
   const [users, tokens, trades, proposals, graduated, highRisk] = await Promise.all([
     prisma.user.count(),

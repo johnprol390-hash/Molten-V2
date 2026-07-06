@@ -19,6 +19,7 @@ model User {
   avatar       String?
   isPublic     Boolean  @default(true)
   points       Int      @default(0)
+  paper        Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   trackedWallets TrackedWallet[]
@@ -26,6 +27,38 @@ model User {
   referralsMade  Referral[]       @relation("referrer")
   notifications  Notification[]
   pointsLog      PointsEntry[]
+  positions      Position[]
+  messages       Message[]
+}
+
+model Position {
+  id            String   @id @default(cuid())
+  userId        String
+  tokenId       String
+  boughtHype    Float    @default(0)
+  soldHype      Float    @default(0)
+  tokensHeld    Float    @default(0)
+  avgEntry      Float    @default(0)
+  realizedPnl   Float    @default(0)
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, tokenId])
+  @@index([userId])
+}
+
+model Message {
+  id      String   @id @default(cuid())
+  tokenId String
+  userId  String?
+  author  String
+  text    String
+  ts      DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([tokenId])
 }
 
 model Wallet {

@@ -1,14 +1,41 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import type { Token } from "@/lib/types";
 import { useAppStore } from "@/store/useAppStore";
-import { useLiveValue } from "@/store/useRealtime";
+import { useRealtime } from "@/store/useRealtime";
 import { formatUsd, formatPct, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/cn";
 
+interface Pos {
+  value: number;
+  unrealized: number;
+  unrealizedPct: number;
+  realized: number;
+  boughtUsd: number;
+  soldUsd: number;
+}
+
 export function PositionStrip({ token }: { token: Token }) {
   const connected = useAppStore((s) => s.wallets.length > 0);
-  const unreal = useLiveValue(312, token.id + ":unreal", 0.05);
+  const lastTrade = useRealtime((s) => s.lastTrade);
+  const [pos, setPos] = useState<Pos | null>(null);
+
+  const load = useCallback(() => {
+    fetch(`/api/positions?tokenId=${token.id}`)
+      .then((r) => r.json())
+      .then((d) => setPos(d.positions?.[0] ?? null))
+      .catch(() => {});
+  }, [token.id]);
+
+  useEffect(() => {
+    if (connected) load();
+  }, [connected, load]);
+
+  // Refresh when a trade on this token lands over the realtime feed.
+  useEffect(() => {
+    if (connected && lastTrade?.tokenId === token.id) load();
+  }, [lastTrade, connected, token.id, load]);
 
   if (!connected) {
     return (
@@ -20,11 +47,16 @@ export function PositionStrip({ token }: { token: Token }) {
   }
 
   const cells = [
-    { label: "Bought", value: formatUsd(1580), color: "" },
-    { label: "Sold", value: formatUsd(420), color: "" },
-    { label: "Holding", value: formatUsd(1240), color: "" },
-    { label: "Unrealized", value: formatUsd(unreal), color: pnlColor(unreal), sub: formatPct(24.3) },
-    { label: "Realized", value: formatUsd(88), color: pnlColor(88), sub: formatPct(5.6) },
+    { label: "Bought", value: formatUsd(pos?.boughtUsd ?? 0), color: "" },
+    { label: "Sold", value: formatUsd(pos?.soldUsd ?? 0), color: "" },
+    { label: "Holding", value: formatUsd(pos?.value ?? 0), color: "" },
+    {
+      label: "Unrealized",
+      value: formatUsd(pos?.unrealized ?? 0),
+      color: pnlColor(pos?.unrealized ?? 0),
+      sub: formatPct(pos?.unrealizedPct ?? 0),
+    },
+    { label: "Realized", value: formatUsd(pos?.realized ?? 0), color: pnlColor(pos?.realized ?? 0) },
   ];
 
   return (

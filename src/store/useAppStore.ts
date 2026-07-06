@@ -81,6 +81,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       if (s.wallets.some((w) => w.address === addr)) return s;
       const label = `${provider} ${s.wallets.length + 1}`;
       const wallets = [...s.wallets, { address: addr, provider, label }];
+      // Simulated sign-in-with-wallet: establish a real server session.
+      if (typeof window !== "undefined") {
+        fetch("/api/auth/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ address: addr }),
+        }).catch(() => {});
+      }
       return { wallets, activeWallet: addr, guest: false };
     }),
   disconnect: (address) =>

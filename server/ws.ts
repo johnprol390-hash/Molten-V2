@@ -34,6 +34,23 @@ function broadcast(data: unknown) {
 
 wss.on("connection", (ws) => {
   ws.send(JSON.stringify({ type: "hello", ts: Date.now(), tokens: tokens.length }));
+  // Server-side callers (e.g. the trade API) connect and send { type: "publish", event }
+  // which is fanned out to every other client — real pub/sub without Redis.
+  ws.on("message", (raw) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg?.type === "publish" && msg.event) {
+        broadcast(msg.event);
+        // Keep the in-memory price cache in sync with executed trades.
+        if (msg.event.type === "trade" && msg.event.trade) {
+          const t = tokens.find((x) => x.id === msg.event.trade.tokenId);
+          if (t && msg.event.trade.price) t.price = msg.event.trade.price;
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  });
 });
 
 // Price ticks — jitter each token's price with a slight random walk.

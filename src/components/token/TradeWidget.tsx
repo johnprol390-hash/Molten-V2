@@ -48,9 +48,31 @@ export function TradeWidget({ token }: { token: Token }) {
     };
   }, [numAmount, side, token]);
 
-  const fire = () => {
-    setToast(`${side === "buy" ? "Bought" : "Sold"} ${amount} ${side === "buy" ? "HYPE of" : ""} ${token.ticker}`);
-    setTimeout(() => setToast(null), 2200);
+  const [pending, setPending] = useState(false);
+  const fire = async () => {
+    if (pending) return;
+    setPending(true);
+    try {
+      const amt = side === "buy" ? numAmount : numAmount * 1_000_000;
+      const res = await fetch("/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId: token.id, side, amount: amt }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setToast(
+          `${side === "buy" ? "Bought" : "Sold"} ${token.ticker} @ $${Number(data.price).toPrecision(4)} · +10 pts`,
+        );
+      } else {
+        setToast(data.error ?? "Trade failed");
+      }
+    } catch {
+      setToast("Network error");
+    } finally {
+      setPending(false);
+      setTimeout(() => setToast(null), 2600);
+    }
   };
 
   return (
@@ -182,14 +204,14 @@ export function TradeWidget({ token }: { token: Token }) {
       {/* Action */}
       <button
         onClick={fire}
-        disabled={!connected}
+        disabled={!connected || pending}
         className={cn(
           "mt-3 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40",
           side === "buy" ? "bg-gain text-base-900 hover:bg-gain/90" : "bg-loss text-white hover:bg-loss/90",
         )}
       >
         {instantTrade && <Zap size={15} />}
-        {!connected ? "Connect wallet to trade" : `${side === "buy" ? "Buy" : "Sell"} ${token.ticker}`}
+        {!connected ? "Connect wallet to trade" : pending ? "Executing…" : `${side === "buy" ? "Buy" : "Sell"} ${token.ticker}`}
       </button>
 
       {toast && (

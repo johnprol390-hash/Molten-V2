@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Token, Holder, Trade } from "@/lib/types";
 import { getTopTraders, type TopTrader } from "@/lib/mock";
+import { useRealtime } from "@/store/useRealtime";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { WalletLink } from "@/components/wallet/WalletLink";
 import { Badge } from "@/components/ui/Badge";
@@ -90,7 +91,33 @@ function TradesTab({
   onlyTracked: boolean;
   isTracked: (a: string) => boolean;
 }) {
-  const rows = onlyTracked ? trades.filter((t) => isTracked(t.wallet)) : trades;
+  const lastTrade = useRealtime((s) => s.lastTrade);
+  const [live, setLive] = useState<Trade[]>([]);
+
+  useEffect(() => {
+    if (lastTrade && lastTrade.tokenId === token.id) {
+      setLive((prev) =>
+        [
+          {
+            id: "live:" + lastTrade.ts,
+            tokenId: token.id,
+            ts: lastTrade.ts,
+            side: lastTrade.side,
+            amountTokens: lastTrade.usd / (lastTrade.price || 1),
+            amountHype: lastTrade.amountHype,
+            usd: lastTrade.usd,
+            price: lastTrade.price,
+            wallet: lastTrade.wallet,
+            tx: "0xlive",
+          } as Trade,
+          ...prev,
+        ].slice(0, 20),
+      );
+    }
+  }, [lastTrade, token.id]);
+
+  const merged = [...live, ...trades];
+  const rows = onlyTracked ? merged.filter((t) => isTracked(t.wallet)) : merged;
   const cols: Column<Trade>[] = [
     { key: "ts", header: "Time", render: (t) => <span className="text-white/40">{timeAgo(t.ts)}</span>, sortable: true, sortValue: (t) => t.ts },
     {
