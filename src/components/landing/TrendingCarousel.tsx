@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { getTokens } from "@/lib/mock";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { formatUsd, formatPct, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/cn";
+import type { Token } from "@/lib/types";
 
-export function TrendingCarousel() {
-  const tokens = [...getTokens()].sort((a, b) => b.volume24h - a.volume24h).slice(0, 12);
+export function TrendingCarousel({ tokens: input }: { tokens: Token[] }) {
+  const tokens = [...input].sort((a, b) => b.volume24h - a.volume24h).slice(0, 12);
   const doubled = [...tokens, ...tokens];
 
   return (

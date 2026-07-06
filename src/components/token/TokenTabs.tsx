@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import type { Token, Holder, Trade } from "@/lib/types";
-import { getHolders, getTrades, getTopTraders, type TopTrader } from "@/lib/mock";
+import { getTopTraders, type TopTrader } from "@/lib/mock";
 import { DataTable, type Column } from "@/components/ui/DataTable";
 import { WalletLink } from "@/components/wallet/WalletLink";
 import { Badge } from "@/components/ui/Badge";
@@ -25,13 +25,11 @@ const TABS = [
   "AI Insights",
 ] as const;
 
-export function TokenTabs({ token }: { token: Token }) {
+export function TokenTabs({ token, trades, holders }: { token: Token; trades: Trade[]; holders: Holder[] }) {
   const [tab, setTab] = useState<(typeof TABS)[number]>("Trades");
   const [onlyTracked, setOnlyTracked] = useState(false);
   const isTracked = useAppStore((s) => s.isTracked);
 
-  const holders = useMemo(() => getHolders(token), [token]);
-  const trades = useMemo(() => getTrades(token), [token]);
   const topTraders = useMemo(() => getTopTraders(token), [token]);
 
   return (

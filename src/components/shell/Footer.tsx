@@ -1,15 +1,17 @@
 "use client";
 
 import { useAppStore } from "@/store/useAppStore";
+import { useRealtime } from "@/store/useRealtime";
 import { cn } from "@/lib/cn";
 import { Activity } from "lucide-react";
 import { constants } from "@/lib/mock";
 
 export function Footer() {
   const connection = useAppStore((s) => s.connection);
+  const transport = useRealtime((s) => s.transport);
   const label =
     connection === "connected"
-      ? "Connection is stable"
+      ? `Connection is stable · ${transport === "ws" ? "WebSocket" : "simulated feed"}`
       : connection === "reconnecting"
         ? "Reconnecting…"
         : "Offline";

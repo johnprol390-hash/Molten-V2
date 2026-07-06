@@ -1,29 +1,11 @@
-"use client";
-
-import { useParams } from "next/navigation";
 import Link from "next/link";
-import { getToken } from "@/lib/mock";
-import { useLiveValue } from "@/store/useRealtime";
-import { PriceChart } from "@/components/token/PriceChart";
-import { TradeWidget } from "@/components/token/TradeWidget";
-import { SafetyPanel } from "@/components/token/SafetyPanel";
-import { TokenTabs } from "@/components/token/TokenTabs";
-import { PositionStrip } from "@/components/token/PositionStrip";
-import { CurveViz } from "@/components/token/CurveViz";
-import { RiskBadge } from "@/components/ui/RiskBadge";
-import { Badge } from "@/components/ui/Badge";
-import { formatUsd, formatPct, pnlColor, compactNumber, timeAgo } from "@/lib/format";
-import { cn } from "@/lib/cn";
-import { ArrowLeft, Globe, Send } from "lucide-react";
+import { queryToken, queryTrades, queryHolders } from "@/lib/queries";
+import { TokenTerminal } from "@/components/token/TokenTerminal";
 
-export default function TokenPage() {
-  const params = useParams();
-  const id = String(params.id);
-  const token = getToken(id);
+export const dynamic = "force-dynamic";
 
-  const price = useLiveValue(token?.price ?? 0, id + ":hp", 0.015);
-  const change = useLiveValue(token?.change24h ?? 0, id + ":hc", 0.02);
-
+export default async function TokenPage({ params }: { params: { id: string } }) {
+  const token = await queryToken(params.id);
   if (!token) {
     return (
       <div className="mx-auto max-w-md px-4 py-24 text-center">
@@ -34,72 +16,6 @@ export default function TokenPage() {
       </div>
     );
   }
-
-  return (
-    <div className="mx-auto max-w-[1600px] px-3 py-3">
-      {/* Header */}
-      <div className="mb-3 flex flex-wrap items-center gap-3">
-        <Link href="/discover" className="rounded-md p-1.5 text-white/40 hover:bg-white/5 hover:text-white">
-          <ArrowLeft size={18} />
-        </Link>
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/5 text-2xl">{token.logo}</div>
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-lg font-bold">{token.name}</h1>
-            <span className="tnum text-sm text-white/40">${token.ticker}</span>
-            <RiskBadge risk={token.risk} />
-            {token.status === "graduated" && <Badge variant="Pro">Graduated</Badge>}
-            {token.kolCount > 0 && <Badge variant="KOL">{token.kolCount} KOLs</Badge>}
-          </div>
-          <div className="flex items-center gap-2 text-[11px] text-white/40">
-            <span>{token.category}</span>
-            <span>·</span>
-            <span>{timeAgo(token.createdAt)}</span>
-            {token.socials.site && (
-              <a href={token.socials.site} target="_blank" rel="noreferrer" className="hover:text-mint">
-                <Globe size={12} />
-              </a>
-            )}
-            {token.socials.tg && (
-              <a href={token.socials.tg} target="_blank" rel="noreferrer" className="hover:text-mint">
-                <Send size={12} />
-              </a>
-            )}
-          </div>
-        </div>
-        <div className="ml-auto flex items-center gap-4">
-          <HeaderStat label="Price" value={formatUsd(price, { decimals: 6 })} />
-          <HeaderStat label="24h" value={formatPct(change)} color={pnlColor(change)} />
-          <HeaderStat label="MCap" value={formatUsd(token.mcap)} />
-          <HeaderStat label="Volume" value={formatUsd(token.volume24h)} />
-          <HeaderStat label="Holders" value={compactNumber(token.holders)} />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 xl:grid-cols-[1fr_300px]">
-        <div className="flex flex-col gap-3">
-          <PositionStrip token={token} />
-          <div className="panel-flat h-[380px]">
-            <PriceChart candles={token.candles} />
-          </div>
-          <TokenTabs token={token} />
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <TradeWidget token={token} />
-          <CurveViz token={token} />
-          <SafetyPanel token={token} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function HeaderStat({ label, value, color }: { label: string; value: string; color?: string }) {
-  return (
-    <div className="text-right">
-      <div className="text-[10px] uppercase text-white/35">{label}</div>
-      <div className={cn("tnum text-sm font-semibold", color)}>{value}</div>
-    </div>
-  );
+  const [trades, holders] = await Promise.all([queryTrades(params.id), queryHolders(params.id)]);
+  return <TokenTerminal token={token} trades={trades} holders={holders} />;
 }

@@ -1,0 +1,281 @@
+// Molten Prisma schema.
+// SQLite for local/simulation; switch `provider` to "postgresql" for production
+// (arrays/enums are modeled as JSON/String so the schema is portable).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  address      String   @unique
+  username     String?
+  bio          String?
+  avatar       String?
+  isPublic     Boolean  @default(true)
+  points       Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  trackedWallets TrackedWallet[]
+  votes          GovernanceVote[]
+  referralsMade  Referral[]       @relation("referrer")
+  notifications  Notification[]
+  pointsLog      PointsEntry[]
+}
+
+model Wallet {
+  address     String   @id
+  label       String?
+  ageMs       Float
+  balanceHype Float
+  isKol       Boolean  @default(false)
+  pnlUsd      Float    @default(0)
+  pnlPct      Float    @default(0)
+  winRate     Float    @default(0)
+  trades      Int      @default(0)
+  avgRoi      Float    @default(0)
+  avgHoldMs   Float    @default(0)
+  badges      String   @default("[]") // JSON array
+
+  kol KolProfile?
+}
+
+model KolProfile {
+  id          String  @id @default(cuid())
+  address     String  @unique
+  name        String
+  twitter     String?
+  followers   Int     @default(0)
+  credibility Int     @default(0)
+  volume      Float   @default(0)
+  bestTrade   Float   @default(0)
+  worstTrade  Float   @default(0)
+  verified    Boolean @default(true)
+
+  wallet Wallet @relation(fields: [address], references: [address], onDelete: Cascade)
+}
+
+model TrackedWallet {
+  id      String @id @default(cuid())
+  userId  String
+  address String
+  name    String @default("Wallet")
+  emoji   String @default("🎯")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, address])
+}
+
+model Token {
+  id             String   @id
+  name           String
+  ticker         String
+  logo           String
+  description    String
+  category       String
+  status         String // new | graduating | graduated
+  createdAt      DateTime @default(now())
+
+  price       Float
+  change24h   Float
+  volume24h   Float
+  mcap        Float
+  holdersCount Int
+  totalSupply Float
+  bondingPct  Float
+
+  // Curve params
+  virtualHype    Float
+  virtualTokens  Float
+  realHype       Float
+  tokensSold     Float
+  graduationHype Float
+  curveSupply    Float
+
+  deployer String
+  contract String
+
+  // Safety inputs (flattened)
+  top10Pct          Float
+  devHoldingsPct    Float
+  snipersPct        Float
+  insidersPct       Float
+  bundlersPct       Float
+  lpBurnedPct       Float
+  freshWalletPct    Float
+  mintRevoked       Boolean
+  freezeRevoked     Boolean
+  dexPaid           Boolean
+  sellable          Boolean
+  deployerPrevTokens Int
+  deployerRugCount   Int
+
+  riskScore Int
+  riskLevel String
+  kolCount  Int    @default(0)
+  proTraders Int   @default(0)
+
+  candles  String @default("[]") // JSON
+  socials  String @default("{}") // JSON
+
+  trades    Trade[]
+  holders   Holder[]
+  devTokens DevToken[]
+}
+
+model Trade {
+  id          String   @id
+  tokenId     String
+  ts          DateTime
+  side        String // buy | sell
+  amountTokens Float
+  amountHype  Float
+  usd         Float
+  price       Float
+  wallet      String
+  tx          String
+
+  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId])
+}
+
+model Holder {
+  id            String @id @default(cuid())
+  tokenId       String
+  wallet        String
+  rank          Int
+  badges        String @default("[]") // JSON
+  otherTokens   Int
+  boughtUsd     Float
+  boughtTokens  Float
+  buys          Int
+  avgBuy        Float
+  soldUsd       Float
+  soldTokens    Float
+  sells         Int
+  avgSell       Float
+  unrealizedPnl Float
+  remainingPct  Float
+
+  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId])
+}
+
+model DevToken {
+  id          String   @id @default(cuid())
+  tokenId     String
+  name        String
+  ticker      String
+  launchedAt  DateTime
+  peakMcap    Float
+  currentMcap Float
+  outcome     String // rugged | migrated | dead | active
+
+  token Token @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+
+  @@index([tokenId])
+}
+
+model GovernanceProposal {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  category    String   @default("General")
+  status      String   @default("active") // active | passed | rejected
+  quorum      Int      @default(1000000)
+  votesFor    Float    @default(0)
+  votesAgainst Float   @default(0)
+  createdAt   DateTime @default(now())
+  endsAt      DateTime
+
+  votes GovernanceVote[]
+}
+
+model GovernanceVote {
+  id         String   @id @default(cuid())
+  proposalId String
+  userId     String
+  support    Boolean
+  power      Float
+  createdAt  DateTime @default(now())
+
+  proposal GovernanceProposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([proposalId, userId])
+}
+
+model TreasuryTransaction {
+  id        String   @id @default(cuid())
+  kind      String // fee | buyback | burn | investment | revenue
+  amountHype Float
+  usd       Float
+  note      String?
+  ts        DateTime @default(now())
+}
+
+model Referral {
+  id         String   @id @default(cuid())
+  referrerId String
+  code       String   @unique
+  clicks     Int      @default(0)
+  signups    Int      @default(0)
+  volumeGen  Float    @default(0)
+  earned     Float    @default(0)
+  tier       Int      @default(1)
+  createdAt  DateTime @default(now())
+
+  referrer User @relation("referrer", fields: [referrerId], references: [id], onDelete: Cascade)
+}
+
+model PointsEntry {
+  id     String   @id @default(cuid())
+  userId String
+  source String // trade | launch | referral | governance | community | streak
+  amount Int
+  ts     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Achievement {
+  id          String  @id @default(cuid())
+  key         String  @unique
+  title       String
+  description String
+  icon        String
+  points      Int     @default(0)
+}
+
+model Notification {
+  id      String   @id @default(cuid())
+  userId  String
+  kind    String
+  title   String
+  body    String
+  read    Boolean  @default(false)
+  ts      DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model AnalyticsPoint {
+  id     String   @id @default(cuid())
+  metric String // volume | mcap | liquidity | holders | revenue | treasury | launches | graduationRate | rugRate
+  day    DateTime
+  value  Float
+
+  @@index([metric])
+}

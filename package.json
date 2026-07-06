@@ -5,13 +5,22 @@
   "description": "Molten — Hyperliquid-native memecoin launchpad and trading terminal",
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "ws": "tsx server/ws.ts",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push --skip-generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:setup": "prisma db push --skip-generate && tsx prisma/seed.ts"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.19.3",
     "clsx": "^2.1.1",
     "d3": "^7.9.0",
     "framer-motion": "^11.11.17",
@@ -20,7 +29,9 @@
     "next": "14.2.15",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "server-only": "^0.0.1",
     "tailwind-merge": "^2.5.4",
+    "ws": "^8.21.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
@@ -28,15 +39,23 @@
     "@types/node": "^22.8.6",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/ws": "^8.18.1",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "14.2.15",
     "postcss": "^8.4.47",
+    "prisma": "^6.19.3",
     "tailwindcss": "^3.4.14",
+    "tsx": "^4.23.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "prisma",
+      "@prisma/client",
+      "@prisma/engines"
+    ]
   }
 }

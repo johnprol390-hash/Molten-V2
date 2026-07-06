@@ -2,6 +2,7 @@ import Link from "next/link";
 import { LiveStats } from "@/components/landing/LiveStats";
 import { TrendingCarousel } from "@/components/landing/TrendingCarousel";
 import { FaqSection } from "@/components/landing/FaqSection";
+import { queryTokens } from "@/lib/queries";
 import {
   Zap,
   Droplets,
@@ -32,7 +33,10 @@ const ROADMAP = [
   { q: "Phase 6", title: "Pro & Polish", items: ["AI features", "Admin suite", "Mobile PWA"], done: false },
 ];
 
-export default function LandingPage() {
+export const dynamic = "force-dynamic";
+
+export default async function LandingPage() {
+  const tokens = await queryTokens();
   return (
     <div className="grid-noise">
       {/* Hero */}
@@ -75,7 +79,7 @@ export default function LandingPage() {
       </section>
 
       <LiveStats />
-      <TrendingCarousel />
+      <TrendingCarousel tokens={tokens} />
 
       {/* Features */}
       <section className="mx-auto max-w-[1600px] px-4 py-16">

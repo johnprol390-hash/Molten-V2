@@ -11,6 +11,8 @@ Hyperliquid wiring can slot in behind the same interfaces later.
 ## Stack
 
 - **Next.js 14** (App Router) + **TypeScript** (strict)
+- **Prisma ORM** + **SQLite** (swap `DATABASE_URL` for Postgres in production)
+- **REST API** route handlers + a standalone **`ws` WebSocket server** for realtime
 - **Tailwind CSS** design system — dark, Hyperliquid mint-green (`#97FCE4`), terminal density, tabular numerics
 - **Zustand** for client state, **Framer Motion** for micro-animations
 - **lightweight-charts** (candlesticks), **D3** (bubble map)
@@ -20,17 +22,44 @@ Hyperliquid wiring can slot in behind the same interfaces later.
 
 ```bash
 pnpm install
-pnpm dev        # http://localhost:3000
+cp .env.example .env      # DATABASE_URL + NEXT_PUBLIC_WS_URL
+pnpm db:setup            # prisma db push + seed
+pnpm ws                  # terminal 1: realtime WebSocket server (port 4001)
+pnpm dev                 # terminal 2: http://localhost:3000
 ```
 
 Other scripts:
 
 ```bash
-pnpm build      # production build
-pnpm start      # run the production build
-pnpm typecheck  # tsc --noEmit
-pnpm test       # vitest (curve + safety engine)
+pnpm build       # prisma generate + next build
+pnpm start       # run the production build
+pnpm typecheck   # tsc --noEmit
+pnpm test        # vitest (curve + safety engine)
+pnpm db:push     # apply schema to the database
+pnpm db:seed     # seed deterministic data
+pnpm ws          # start the realtime server
 ```
+
+### Backend
+
+- **Database** — Prisma schema in `prisma/schema.prisma` covering Users, Wallets, KOLs, Tokens,
+  Trades, Holders, DevTokens, Governance (proposals + votes), Treasury, Referrals, Points,
+  Achievements, Notifications and Analytics. SQLite by default; change the `datasource` provider
+  and `DATABASE_URL` to run on Postgres.
+- **Seed** — `prisma/seed.ts` populates the DB deterministically from the generators in
+  `src/lib/mock.ts`.
+- **Data access** — `src/lib/queries.ts` (server-only) reads through Prisma and maps rows to the
+  domain types; risk factor breakdowns are recomputed by the safety engine (single source of truth).
+- **REST API** — route handlers under `src/app/api/*` (`/tokens`, `/tokens/[id]`, `.../trades`,
+  `.../holders`, `/kols`, `/governance` (GET+POST), `/governance/[id]/vote` (POST, transactional),
+  `/treasury`, `/analytics`, `/points`, `/referrals`, `/notifications`).
+- **Realtime** — `server/ws.ts` is a standalone WebSocket server that loads tokens from the DB and
+  broadcasts `tick` / `trade` events. The client (`src/store/useRealtime.tsx`) connects to
+  `NEXT_PUBLIC_WS_URL` and **falls back to a local simulated ticker** if the server is unavailable,
+  with auto-reconnect. The footer shows which transport is active.
+
+The landing, Discover and Token terminal pages are React Server Components that read from the
+database; Governance writes real votes back through the API.
 
 ## Architecture
 
@@ -62,9 +91,16 @@ Every wallet address rendered anywhere is a `<WalletLink>` that opens the single
 - `/leaderboards` — multi-category, multi-timeframe leaderboards
 - `/dashboard` — portfolio value, holdings, points, watchlist
 - `/wallet/[address]` — wallet profile with PnL curve and trade history
+- `/governance` — proposals with **real, transactional voting** and proposal creation
+- `/treasury` — holdings, allocation, and on-chain transaction log
+- `/analytics` — 9 platform metrics with timeframe toggles
+- `/points` — level, points-by-source, achievements
+- `/referrals` — link, stats, multi-tier rewards
+- `/notifications` — activity feed + per-category preferences
+- `/admin` — platform stats, fraud queue, emergency controls
 
 ## Status
 
-Phases 1–3 of the master roadmap are implemented, plus a slice of the tracking layer (KOLs,
-wallet tracking, trader modal). See the roadmap section on the landing page for what's shipped
-vs. planned.
+Phases 1–3 of the master roadmap plus a slice of the tracking layer, now backed by a **real
+persistent database, REST API and WebSocket server**. See the roadmap on the landing page for
+what's shipped vs. planned.

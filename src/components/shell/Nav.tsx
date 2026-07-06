@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { Flame, Search, Command } from "lucide-react";
+import { Flame, Search, Command, Bell, ChevronDown } from "lucide-react";
 import { WalletButton } from "@/components/wallet/WalletButton";
 import { useCommandPalette } from "@/components/shell/CommandPalette";
 
@@ -16,9 +16,19 @@ const LINKS = [
   { href: "/dashboard", label: "Dashboard" },
 ];
 
+const MORE_LINKS = [
+  { href: "/governance", label: "Governance" },
+  { href: "/treasury", label: "Treasury" },
+  { href: "/analytics", label: "Analytics" },
+  { href: "/points", label: "Points & Achievements" },
+  { href: "/referrals", label: "Referrals" },
+  { href: "/admin", label: "Admin" },
+];
+
 export function Nav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const openPalette = useCommandPalette((s) => s.open);
 
   return (
@@ -49,6 +59,31 @@ export function Nav() {
               </Link>
             );
           })}
+          <div className="relative">
+            <button
+              onClick={() => setMoreOpen((o) => !o)}
+              className="flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-medium text-white/55 transition-colors hover:bg-white/5 hover:text-white/90"
+            >
+              More <ChevronDown size={13} className={cn("transition-transform", moreOpen && "rotate-180")} />
+            </button>
+            {moreOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
+                <div className="absolute left-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-white/10 bg-base-850 py-1 shadow-panel">
+                  {MORE_LINKS.map((l) => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setMoreOpen(false)}
+                      className="block px-3 py-2 text-sm text-white/70 hover:bg-white/5 hover:text-white"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
@@ -62,6 +97,14 @@ export function Nav() {
               <Command size={9} />K
             </kbd>
           </button>
+          <Link
+            href="/notifications"
+            className="relative rounded-lg border border-white/8 bg-white/4 p-2 text-white/60 transition-colors hover:border-mint/30 hover:text-white"
+            aria-label="Notifications"
+          >
+            <Bell size={15} />
+            <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-mint" />
+          </Link>
           <WalletButton />
           <button
             className="rounded-md p-2 text-white/60 md:hidden"
@@ -79,7 +122,7 @@ export function Nav() {
 
       {mobileOpen && (
         <nav className="flex flex-col gap-1 border-t border-white/6 px-4 py-3 md:hidden">
-          {LINKS.map((l) => (
+          {[...LINKS, ...MORE_LINKS].map((l) => (
             <Link
               key={l.href}
               href={l.href}
