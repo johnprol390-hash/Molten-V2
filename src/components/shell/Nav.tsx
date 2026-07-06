@@ -17,6 +17,7 @@ const LINKS = [
 ];
 
 const MORE_LINKS = [
+  { href: "/ai", label: "AI Studio" },
   { href: "/governance", label: "Governance" },
   { href: "/treasury", label: "Treasury" },
   { href: "/analytics", label: "Analytics" },

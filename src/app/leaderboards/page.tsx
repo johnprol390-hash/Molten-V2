@@ -105,7 +105,7 @@ export default function LeaderboardsPage() {
       </div>
 
       <div className="panel-flat">
-        <DataTable columns={cols} rows={rows} rowKey={(r) => String(r.rank)} defaultSort={{ key: "pnl", dir: "desc" }} />
+        <DataTable columns={cols} rows={rows} rowKey={(r) => String(r.rank)} defaultSort={{ key: "pnl", dir: "desc" }} exportName={`molten-${cat.toLowerCase().replace(/\s+/g, "-")}`} />
       </div>
     </div>
   );

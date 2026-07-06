@@ -39,15 +39,19 @@ export default function LaunchPage() {
 
   const set = (patch: Partial<typeof form>) => setForm((f) => ({ ...f, ...patch }));
 
-  const aiGenerate = () => {
-    const names = ["Molten Moon", "HyperShiba", "Liquid Gold", "Neon Ape", "Plasma Pump"];
-    const n = names[Math.floor(Math.random() * names.length)];
-    set({
-      name: n,
-      ticker: n.split(" ").map((w) => w[0]).join("").toUpperCase() + "X",
-      description: `${n} — the most degenerate, community-driven token native to Hyperliquid. Fair launch, LP burned, straight to the moon.`,
-      logo: EMOJIS[Math.floor(Math.random() * EMOJIS.length)],
-    });
+  const aiGenerate = async () => {
+    try {
+      const res = await fetch("/api/ai/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: form.description || form.category }),
+      });
+      const c = await res.json();
+      set({ name: c.name, ticker: c.ticker, description: c.description, logo: c.logo });
+    } catch {
+      const n = "Molten Moon";
+      set({ name: n, ticker: "MMX", description: `${n} — community-driven token native to Hyperliquid.`, logo: "🚀" });
+    }
   };
 
   const curve = defaultCurve({ graduationHype: form.graduationHype, virtualHype: form.virtualHype });

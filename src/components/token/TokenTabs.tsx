@@ -9,6 +9,7 @@ import { WalletLink } from "@/components/wallet/WalletLink";
 import { Badge } from "@/components/ui/Badge";
 import { BubbleMap } from "./BubbleMap";
 import { AiInsights } from "./AiInsights";
+import { CommunityChat } from "./CommunityChat";
 import { useAppStore } from "@/store/useAppStore";
 import { formatUsd, formatHype, compactNumber, timeAgo, formatAge, pnlColor, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -73,7 +74,7 @@ export function TokenTabs({ token, trades, holders }: { token: Token; trades: Tr
         {tab === "Top Traders" && <TopTradersTab traders={topTraders} token={token} />}
         {tab === "Dev Tokens" && <DevTokensTab token={token} />}
         {tab === "Bubble Map" && <BubbleMap holders={holders} tokenId={token.id} />}
-        {tab === "Community" && <CommunityTab token={token} />}
+        {tab === "Community" && <CommunityChat token={token} />}
         {tab === "AI Insights" && <AiInsights token={token} />}
       </div>
     </div>
@@ -186,6 +187,7 @@ function HoldersTab({
       defaultSort={{ key: "rem", dir: "desc" }}
       maxHeight="420px"
       emptyTitle="No tracked wallets hold this token"
+      exportName={`${token.ticker}-holders`}
     />
   );
 }
@@ -283,45 +285,3 @@ function PosCard({ label, value, color }: { label: string; value: string; color?
   );
 }
 
-function CommunityTab({ token }: { token: Token }) {
-  const msgs = [
-    { user: "0xMachi", text: `${token.ticker} chart looking primed 🚀`, ts: "2m" },
-    { user: "degenDan", text: "just aped the preset, lfg", ts: "4m" },
-    { user: "safuSue", text: "LP burned + mint revoked, clean launch", ts: "9m" },
-    { user: "whaleWatch", text: "3 KOLs already in this one", ts: "14m" },
-  ];
-  return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {["100 holders reached", "50% bonded", token.status === "graduated" ? "Graduated 🎓" : "Climbing the curve"].map((m) => (
-          <span key={m} className="rounded-full bg-mint/10 px-2.5 py-1 text-[11px] text-mint">
-            🏆 {m}
-          </span>
-        ))}
-      </div>
-      <div className="space-y-2">
-        {msgs.map((m, i) => (
-          <div key={i} className="flex items-start gap-2 rounded-lg bg-white/3 px-3 py-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-mint/15 text-xs text-mint">
-              {m.user[2]?.toUpperCase()}
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-mint">{m.user}</span>
-                <span className="text-[10px] text-white/30">{m.ts} ago</span>
-              </div>
-              <p className="text-sm text-white/70">{m.text}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input
-          placeholder="Message the community…"
-          className="flex-1 rounded-lg border border-white/8 bg-white/3 px-3 py-2 text-sm outline-none placeholder:text-white/30"
-        />
-        <button className="rounded-lg bg-mint px-4 text-sm font-semibold text-base-900">Send</button>
-      </div>
-    </div>
-  );
-}

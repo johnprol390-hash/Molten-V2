@@ -14,11 +14,18 @@ import { formatUsd, formatPct, pnlColor, compactNumber, timeAgo } from "@/lib/fo
 import { cn } from "@/lib/cn";
 import { ArrowLeft, Globe, Send } from "lucide-react";
 import type { Token, Trade, Holder } from "@/lib/types";
+import { useEffect } from "react";
+import { useRecent } from "@/store/useRecent";
 
 export function TokenTerminal({ token, trades, holders }: { token: Token; trades: Trade[]; holders: Holder[] }) {
   const id = token.id;
   const price = useLiveValue(token.price, id + ":hp", 0.015);
   const change = useLiveValue(token.change24h, id + ":hc", 0.02);
+  const addRecent = useRecent((s) => s.add);
+
+  useEffect(() => {
+    addRecent({ id: token.id, ticker: token.ticker, logo: token.logo });
+  }, [token.id, token.ticker, token.logo, addRecent]);
 
   return (
     <div className="mx-auto max-w-[1600px] px-3 py-3">

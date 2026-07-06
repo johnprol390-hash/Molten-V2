@@ -50,9 +50,17 @@ pnpm ws          # start the realtime server
   `src/lib/mock.ts`.
 - **Data access** — `src/lib/queries.ts` (server-only) reads through Prisma and maps rows to the
   domain types; risk factor breakdowns are recomputed by the safety engine (single source of truth).
-- **REST API** — route handlers under `src/app/api/*` (`/tokens`, `/tokens/[id]`, `.../trades`,
-  `.../holders`, `/kols`, `/governance` (GET+POST), `/governance/[id]/vote` (POST, transactional),
-  `/treasury`, `/analytics`, `/points`, `/referrals`, `/notifications`).
+- **Auth** — simulated sign-in-with-wallet: `POST /api/auth/connect` upserts a `User` and sets a
+  signed session cookie (`src/lib/session.ts`); `GET /api/auth/me` restores it. Stands in for
+  SIWE + iron-session.
+- **Trade execution** — `POST /api/trade` applies the bonding-curve math, writes the `Trade`,
+  updates the token's price/curve/volume/status, upserts the user's `Position`, awards points, and
+  broadcasts the fill over the realtime layer.
+- **REST API** — route handlers under `src/app/api/*`: `/tokens`, `/tokens/[id]`, `.../trades`,
+  `.../holders`, `.../messages` (community chat GET+POST), `/kols`, `/governance` (GET+POST),
+  `/governance/[id]/vote` (POST, transactional), `/treasury`, `/analytics`, `/points`, `/referrals`,
+  `/notifications` (GET+PATCH), `/positions`, `/tracked` (GET/POST/DELETE), `/trade`, `/auth/*`,
+  `/ai/generate`, `/ai/ask`.
 - **Realtime** — `server/ws.ts` is a standalone WebSocket server that loads tokens from the DB and
   broadcasts `tick` / `trade` events. The client (`src/store/useRealtime.tsx`) connects to
   `NEXT_PUBLIC_WS_URL` and **falls back to a local simulated ticker** if the server is unavailable,
@@ -98,9 +106,22 @@ Every wallet address rendered anywhere is a `<WalletLink>` that opens the single
 - `/referrals` — link, stats, multi-tier rewards
 - `/notifications` — activity feed + per-category preferences
 - `/admin` — platform stats, fraud queue, emergency controls
+- `/ai` — AI token generator + data-grounded assistant
+
+## What's live end-to-end
+
+- **Sign-in-with-wallet** → server session → per-user data
+- **Real trade execution** on the bonding curve: buy/sell updates price, position, points, and
+  broadcasts the fill to every connected client over WebSocket in real time
+- **Per-user positions** shown on the position strip and dashboard, updating live on fills
+- **Persistent community chat** per token
+- **Governance voting** that persists (transactional, idempotent per user)
+- **Tracked wallets** persisted per user
+- **AI** token generator + assistant grounded in live DB data
+- **CSV export** on data tables, recently-viewed token bar, ⌘K command palette
 
 ## Status
 
-Phases 1–3 of the master roadmap plus a slice of the tracking layer, now backed by a **real
-persistent database, REST API and WebSocket server**. See the roadmap on the landing page for
-what's shipped vs. planned.
+Phases 1–4 of the master roadmap are substantially implemented, backed by a **real persistent
+database, REST API, session auth and WebSocket server**. Remaining: worker-driven copy-trading
+(needs Redis), real Hyperliquid SDK wiring, and the long tail of the 51–150 feature list.

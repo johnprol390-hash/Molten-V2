@@ -45,6 +45,7 @@ interface AppState {
   // Tracked wallets
   tracked: TrackedWallet[];
   toggleTracked: (address: string, name?: string) => void;
+  hydrateTracked: (list: TrackedWallet[]) => void;
   isTracked: (address: string) => boolean;
 
   // Trader quick-view modal
@@ -121,11 +122,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   toggleTracked: (address, name) =>
     set((s) => {
       const exists = s.tracked.some((t) => t.address === address);
+      if (typeof window !== "undefined") {
+        if (exists) {
+          fetch(`/api/tracked?address=${encodeURIComponent(address)}`, { method: "DELETE" }).catch(() => {});
+        } else {
+          fetch("/api/tracked", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ address, name: name ?? "Wallet" }),
+          }).catch(() => {});
+        }
+      }
       if (exists) return { tracked: s.tracked.filter((t) => t.address !== address) };
       return {
         tracked: [...s.tracked, { address, name: name ?? "Wallet", emoji: "🎯" }],
       };
     }),
+  hydrateTracked: (list) => set({ tracked: list }),
   isTracked: (address) => get().tracked.some((t) => t.address === address),
 
   traderModalAddress: null,

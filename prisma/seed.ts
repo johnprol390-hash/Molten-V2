@@ -131,6 +131,24 @@ async function main() {
   }
   console.log(`  ✓ ${tokens.length} tokens with trades, holders & dev history`);
 
+  // Seed community chat messages for the first few tokens.
+  const chatSeeds = [
+    { author: "0xMachi", text: "chart looking primed 🚀" },
+    { author: "degenDan", text: "just aped the preset, lfg" },
+    { author: "safuSue", text: "LP burned + mint revoked, clean launch" },
+    { author: "whaleWatch", text: "3 KOLs already in this one 👀" },
+  ];
+  for (const t of tokens.slice(0, 6)) {
+    await prisma.message.createMany({
+      data: chatSeeds.map((c, i) => ({
+        tokenId: t.id,
+        author: c.author,
+        text: c.text,
+        ts: new Date(Date.now() - (chatSeeds.length - i) * 120000),
+      })),
+    });
+  }
+
   // Wallets + KOL profiles
   const kols = getKols(10);
   for (const k of kols) {

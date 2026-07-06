@@ -1,9 +1,23 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
+import { ChevronUp, ChevronDown, Download } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { EmptyState } from "./Skeleton";
+
+function toCsv<T>(columns: Column<T>[], rows: T[]): string {
+  const cols = columns.filter((c) => c.sortValue || typeof c.render === "function");
+  const header = cols.map((c) => `"${c.header}"`).join(",");
+  const lines = rows.map((r) =>
+    cols
+      .map((c) => {
+        const v = c.sortValue ? c.sortValue(r) : "";
+        return `"${String(v).replace(/"/g, '""')}"`;
+      })
+      .join(","),
+  );
+  return [header, ...lines].join("\n");
+}
 
 export interface Column<T> {
   key: string;
@@ -26,6 +40,7 @@ export function DataTable<T>({
   emptyTitle = "Nothing here yet",
   emptyHint,
   maxHeight,
+  exportName,
 }: {
   columns: Column<T>[];
   rows: T[];
@@ -36,6 +51,7 @@ export function DataTable<T>({
   emptyTitle?: string;
   emptyHint?: string;
   maxHeight?: string;
+  exportName?: string;
 }) {
   const [sort, setSort] = useState(defaultSort ?? null);
 
@@ -66,8 +82,30 @@ export function DataTable<T>({
     return <EmptyState title={emptyTitle} hint={emptyHint} />;
   }
 
+  const download = () => {
+    const csv = toCsv(columns, sorted);
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${exportName ?? "molten-export"}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="overflow-auto" style={maxHeight ? { maxHeight } : undefined}>
+    <>
+      {exportName && (
+        <div className="flex justify-end px-2 pt-2">
+          <button
+            onClick={download}
+            className="flex items-center gap-1 rounded-md border border-white/8 px-2 py-1 text-[11px] text-white/50 hover:border-mint/30 hover:text-mint"
+          >
+            <Download size={11} /> CSV
+          </button>
+        </div>
+      )}
+      <div className="overflow-auto" style={maxHeight ? { maxHeight } : undefined}>
       <table className="w-full border-collapse text-xs">
         <thead className="sticky top-0 z-10 bg-base-850/95 backdrop-blur">
           <tr className="border-b border-white/8 text-white/40">
@@ -121,6 +159,7 @@ export function DataTable<T>({
           ))}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }
