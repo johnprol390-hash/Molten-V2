@@ -9,6 +9,7 @@ import { TraderModal } from "@/components/wallet/TraderModal";
 import { RealtimeProvider } from "@/store/useRealtime";
 import { useAppStore } from "@/store/useAppStore";
 import { PinnedBar } from "./PinnedBar";
+import { PrefsEffects } from "./PrefsEffects";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -46,6 +47,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <CommandPalette />
       <TraderModal />
+      <PrefsEffects />
     </RealtimeProvider>
   );
 }

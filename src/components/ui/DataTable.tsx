@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ChevronUp, ChevronDown, Download } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { EmptyState } from "./Skeleton";
+import { usePrefs } from "@/store/usePrefs";
 
 function toCsv<T>(columns: Column<T>[], rows: T[]): string {
   const cols = columns.filter((c) => c.sortValue || typeof c.render === "function");
@@ -35,7 +36,7 @@ export function DataTable<T>({
   rows,
   rowKey,
   defaultSort,
-  density = "dense",
+  density,
   onRowClick,
   emptyTitle = "Nothing here yet",
   emptyHint,
@@ -54,6 +55,8 @@ export function DataTable<T>({
   exportName?: string;
 }) {
   const [sort, setSort] = useState(defaultSort ?? null);
+  const prefDensity = usePrefs((s) => s.density);
+  const effectiveDensity = density ?? prefDensity;
 
   const sorted = useMemo(() => {
     if (!sort) return rows;
@@ -76,7 +79,7 @@ export function DataTable<T>({
     });
   };
 
-  const pad = density === "compact" ? "py-1" : density === "comfortable" ? "py-2.5" : "py-1.5";
+  const pad = effectiveDensity === "compact" ? "py-1" : effectiveDensity === "comfortable" ? "py-2.5" : "py-1.5";
 
   if (rows.length === 0) {
     return <EmptyState title={emptyTitle} hint={emptyHint} />;

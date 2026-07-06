@@ -107,6 +107,12 @@ Every wallet address rendered anywhere is a `<WalletLink>` that opens the single
 - `/notifications` — activity feed + per-category preferences
 - `/admin` — platform stats, fraud queue, emergency controls
 - `/ai` — AI token generator + data-grounded assistant
+- `/features` — live registry of all 150 numbered features + rollout status
+- `/settings` — currency, density, accent, lite mode, streamer mode, paper trading, sound alerts, reduced motion, daily loss cap
+- `/compare` — side-by-side token comparison
+- `/multichart` — up to 4 live charts at once
+- `/narratives` — tokens grouped by meta/narrative
+- `/status` — system status + uptime
 
 ## What's live end-to-end
 
@@ -120,8 +126,20 @@ Every wallet address rendered anywhere is a `<WalletLink>` that opens the single
 - **AI** token generator + assistant grounded in live DB data
 - **CSV export** on data tables, recently-viewed token bar, ⌘K command palette
 
+## The 150 features
+
+All 150 numbered features (spec §"50 ADDITIONAL FEATURES" + §"100 MORE FEATURES") are catalogued in
+`src/lib/features.ts` and surfaced at `/features` as a live feature-flag registry with per-feature
+status (`live` / `beta` / `soon`). Per the spec's Phase 6 guidance ("implement quick wins first,
+stub the rest behind feature flags"), a large batch of quick wins is fully implemented —
+command palette, multi-chart, token comparison, trending narratives, currency toggle, lite mode,
+streamer mode, table density, sound alerts, reduced motion, paper trading, anti-fat-finger guard,
+net-flow gauge, Fear/Greed index, recently-viewed bar, CSV export, status page, and more — while
+the remainder are transparently flagged as planned.
+
 ## Status
 
-Phases 1–4 of the master roadmap are substantially implemented, backed by a **real persistent
-database, REST API, session auth and WebSocket server**. Remaining: worker-driven copy-trading
-(needs Redis), real Hyperliquid SDK wiring, and the long tail of the 51–150 feature list.
+Phases 1–5 of the master roadmap are substantially implemented, backed by a **real persistent
+database, REST API, session auth and WebSocket server**, plus the Phase 6 feature-flag registry.
+Remaining deep items: worker-driven copy-trading (needs Redis), real Hyperliquid SDK wiring, and
+the features still marked `soon` in the registry.

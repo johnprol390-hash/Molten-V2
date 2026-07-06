@@ -25,6 +25,19 @@ export function AnalyticsClient({ metrics }: { metrics: Series }) {
   const [tf, setTf] = useState<keyof typeof TF>("30D");
   const days = TF[tf];
 
+  // Fear/Greed index (#34): higher graduation rate + volume growth = greed,
+  // higher rug rate = fear.
+  const gradSeries = metrics.graduationRate ?? [];
+  const rugSeries = metrics.rugRate ?? [];
+  const volSeries = metrics.volume ?? [];
+  const grad = gradSeries[gradSeries.length - 1]?.value ?? 20;
+  const rug = rugSeries[rugSeries.length - 1]?.value ?? 10;
+  const volTrend =
+    volSeries.length > 1 ? (volSeries[volSeries.length - 1].value / volSeries[0].value - 1) * 100 : 0;
+  const fearGreed = Math.max(0, Math.min(100, Math.round(50 + grad - rug * 1.5 + Math.max(-20, Math.min(20, volTrend / 5)))));
+  const fgLabel = fearGreed >= 75 ? "Extreme Greed" : fearGreed >= 55 ? "Greed" : fearGreed >= 45 ? "Neutral" : fearGreed >= 25 ? "Fear" : "Extreme Fear";
+  const fgColor = fearGreed >= 55 ? "text-gain" : fearGreed >= 45 ? "text-warn" : "text-loss";
+
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-5">
       <div className="mb-4 flex items-center justify-between">
@@ -35,6 +48,31 @@ export function AnalyticsClient({ metrics }: { metrics: Series }) {
               {t}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="panel mb-3 flex items-center gap-4 p-4">
+        <div className="relative flex h-20 w-20 items-center justify-center">
+          <svg viewBox="0 0 36 36" className="h-20 w-20 -rotate-90">
+            <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
+            <circle
+              cx="18"
+              cy="18"
+              r="15.5"
+              fill="none"
+              stroke="currentColor"
+              className={fgColor}
+              strokeWidth="3"
+              strokeDasharray={`${(fearGreed / 100) * 97.4} 97.4`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span className={cn("absolute tnum text-lg font-bold", fgColor)}>{fearGreed}</span>
+        </div>
+        <div>
+          <div className="text-xs text-white/40">Molten Fear / Greed Index</div>
+          <div className={cn("text-lg font-bold", fgColor)}>{fgLabel}</div>
+          <div className="text-[11px] text-white/40">Computed from graduation rate, rug rate & volume flow</div>
         </div>
       </div>
 

@@ -76,3 +76,21 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Manual reduced-motion toggle (#50) */
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
+}
+
+/* Lite mode (#26): softens dense terminal chrome for beginners */
+.lite .panel,
+.lite .panel-flat {
+  backdrop-filter: none;
+}
+.lite .grid-noise {
+  background-image: none;
+}

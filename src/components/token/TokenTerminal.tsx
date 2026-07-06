@@ -8,9 +8,11 @@ import { SafetyPanel } from "@/components/token/SafetyPanel";
 import { TokenTabs } from "@/components/token/TokenTabs";
 import { PositionStrip } from "@/components/token/PositionStrip";
 import { CurveViz } from "@/components/token/CurveViz";
+import { NetFlowGauge } from "@/components/token/NetFlowGauge";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { Badge } from "@/components/ui/Badge";
 import { formatUsd, formatPct, pnlColor, compactNumber, timeAgo } from "@/lib/format";
+import { useMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 import { ArrowLeft, Globe, Send } from "lucide-react";
 import type { Token, Trade, Holder } from "@/lib/types";
@@ -22,6 +24,7 @@ export function TokenTerminal({ token, trades, holders }: { token: Token; trades
   const price = useLiveValue(token.price, id + ":hp", 0.015);
   const change = useLiveValue(token.change24h, id + ":hc", 0.02);
   const addRecent = useRecent((s) => s.add);
+  const { money } = useMoney();
 
   useEffect(() => {
     addRecent({ id: token.id, ticker: token.ticker, logo: token.logo });
@@ -60,10 +63,10 @@ export function TokenTerminal({ token, trades, holders }: { token: Token; trades
           </div>
         </div>
         <div className="ml-auto flex items-center gap-4">
-          <HeaderStat label="Price" value={formatUsd(price, { decimals: 6 })} />
+          <HeaderStat label="Price" value={money(price, { decimals: 6 })} />
           <HeaderStat label="24h" value={formatPct(change)} color={pnlColor(change)} />
-          <HeaderStat label="MCap" value={formatUsd(token.mcap)} />
-          <HeaderStat label="Volume" value={formatUsd(token.volume24h)} />
+          <HeaderStat label="MCap" value={money(token.mcap)} />
+          <HeaderStat label="Volume" value={money(token.volume24h)} />
           <HeaderStat label="Holders" value={compactNumber(token.holders)} />
         </div>
       </div>
@@ -80,6 +83,7 @@ export function TokenTerminal({ token, trades, holders }: { token: Token; trades
         <div className="flex flex-col gap-3">
           <TradeWidget token={token} />
           <CurveViz token={token} />
+          <NetFlowGauge trades={trades} tokenId={token.id} />
           <SafetyPanel token={token} />
         </div>
       </div>

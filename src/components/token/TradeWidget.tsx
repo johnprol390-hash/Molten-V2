@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { Token } from "@/lib/types";
 import { quoteBuy, quoteSell } from "@/lib/curve";
 import { useAppStore } from "@/store/useAppStore";
+import { usePrefs } from "@/store/usePrefs";
 import { constants } from "@/lib/mock";
 import { formatHype, compactNumber, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -22,6 +23,7 @@ export function TradeWidget({ token }: { token: Token }) {
   const [showSettings, setShowSettings] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
+  const paper = usePrefs((s) => s.paperTrading);
   const preset = presets.find((p) => p.id === activePreset)!;
   const numAmount = parseFloat(amount) || 0;
   const connected = wallets.length > 0;
@@ -51,6 +53,10 @@ export function TradeWidget({ token }: { token: Token }) {
   const [pending, setPending] = useState(false);
   const fire = async () => {
     if (pending) return;
+    // Anti-fat-finger guard (#59): confirm unusually large buys.
+    if (side === "buy" && numAmount >= 10 && typeof window !== "undefined") {
+      if (!window.confirm(`Confirm large buy of ${numAmount} HYPE of ${token.ticker}?`)) return;
+    }
     setPending(true);
     try {
       const amt = side === "buy" ? numAmount : numAmount * 1_000_000;
@@ -77,6 +83,11 @@ export function TradeWidget({ token }: { token: Token }) {
 
   return (
     <div className="panel-flat flex flex-col p-3">
+      {paper && (
+        <div className="mb-2 rounded-md bg-ai/15 px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wide text-ai">
+          Paper Trading — simulated balance
+        </div>
+      )}
       {/* Buy/Sell tabs */}
       <div className="flex rounded-lg bg-white/5 p-0.5">
         {(["buy", "sell"] as const).map((s) => (

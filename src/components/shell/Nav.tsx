@@ -18,12 +18,18 @@ const LINKS = [
 
 const MORE_LINKS = [
   { href: "/ai", label: "AI Studio" },
+  { href: "/multichart", label: "Multi-Chart" },
+  { href: "/compare", label: "Compare Tokens" },
+  { href: "/narratives", label: "Narratives" },
   { href: "/governance", label: "Governance" },
   { href: "/treasury", label: "Treasury" },
   { href: "/analytics", label: "Analytics" },
   { href: "/points", label: "Points & Achievements" },
   { href: "/referrals", label: "Referrals" },
   { href: "/admin", label: "Admin" },
+  { href: "/features", label: "Feature Registry" },
+  { href: "/status", label: "System Status" },
+  { href: "/settings", label: "Settings" },
 ];
 
 export function Nav() {

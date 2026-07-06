@@ -6,7 +6,8 @@ import { useLiveValue } from "@/store/useRealtime";
 import { RiskBadge } from "@/components/ui/RiskBadge";
 import { BondingBar } from "@/components/ui/BondingBar";
 import { Badge } from "@/components/ui/Badge";
-import { formatUsd, compactNumber, formatPct, timeAgo, pnlColor } from "@/lib/format";
+import { compactNumber, formatPct, timeAgo, pnlColor } from "@/lib/format";
+import { useMoney } from "@/lib/money";
 import { cn } from "@/lib/cn";
 import type { Token } from "@/lib/types";
 import { Zap, Users, ShieldCheck } from "lucide-react";
@@ -15,6 +16,7 @@ export function TokenCard({ token }: { token: Token }) {
   const preset = useAppStore((s) => s.presets.find((p) => p.id === s.activePreset));
   const price = useLiveValue(token.price, token.id + ":price", 0.02);
   const change = useLiveValue(token.change24h, token.id + ":chg", 0.03);
+  const { money } = useMoney();
 
   const metrics: { label: string; value: string; danger?: boolean }[] = [
     { label: "Top10", value: `${token.safety.top10Pct.toFixed(0)}%`, danger: token.safety.top10Pct > 40 },
@@ -51,12 +53,12 @@ export function TokenCard({ token }: { token: Token }) {
 
       <div className="mt-2.5 flex items-end justify-between">
         <div>
-          <div className="tnum text-sm font-semibold">{formatUsd(price, { decimals: price < 1 ? 6 : 2 })}</div>
+          <div className="tnum text-sm font-semibold">{money(price, { decimals: price < 1 ? 6 : 2 })}</div>
           <div className={cn("tnum text-xs", pnlColor(change))}>{formatPct(change)}</div>
         </div>
         <div className="text-right text-[11px] text-white/40">
-          <div className="tnum">MC {formatUsd(token.mcap)}</div>
-          <div className="tnum">V {formatUsd(token.volume24h)}</div>
+          <div className="tnum">MC {money(token.mcap)}</div>
+          <div className="tnum">V {money(token.volume24h)}</div>
         </div>
       </div>
 
