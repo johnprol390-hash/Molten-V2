@@ -1,13 +1,15 @@
 // Molten Prisma schema.
-// SQLite for local/simulation; switch `provider` to "postgresql" for production
-// (arrays/enums are modeled as JSON/String so the schema is portable).
+// PostgreSQL (Vercel Postgres / Neon / Supabase). Arrays/enums are modeled as
+// JSON/String so the schema stays portable. `binaryTargets` includes the
+// Vercel/AWS Lambda engine so `prisma generate` bundles the right query engine.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 

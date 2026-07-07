@@ -18,15 +18,59 @@ Hyperliquid wiring can slot in behind the same interfaces later.
 - **lightweight-charts** (candlesticks), **D3** (bubble map)
 - **Vitest** unit tests for the pure math/safety modules
 
+> **Repository layout:** Molten is a **single-root Next.js app** (`src/app`), _not_ a
+> Turborepo/`apps/web` monorepo. There are no internal `packages/*`, so there's nothing to
+> `transpilePackages` and Vercel's **Root Directory must be the repository root**.
+
 ## Getting started
 
 ```bash
-pnpm install
-cp .env.example .env      # DATABASE_URL + NEXT_PUBLIC_WS_URL
-pnpm db:setup            # prisma db push + seed
-pnpm ws                  # terminal 1: realtime WebSocket server (port 4001)
-pnpm dev                 # terminal 2: http://localhost:3000
+pnpm install                 # also runs `prisma generate` via postinstall
+cp .env.example .env         # set DATABASE_URL to a Postgres connection string
+pnpm db:setup                # prisma db push + seed (needs a reachable Postgres)
+pnpm ws                      # terminal 1: realtime WebSocket server (port 4001)
+pnpm dev                     # terminal 2: http://localhost:3000
 ```
+
+Need a local Postgres? Any of Vercel Postgres, Neon, Supabase, or `docker run -e
+POSTGRES_PASSWORD=postgres -p 5432:5432 postgres` works — just point `DATABASE_URL` at it.
+
+## Deploying to Vercel
+
+This is a single Next.js app; deploy it directly.
+
+**Dashboard settings**
+
+| Setting | Value |
+| --- | --- |
+| Framework Preset | Next.js |
+| Root Directory | `./` (repository root — **not** `apps/web`) |
+| Include files outside root directory | Off (there are no workspace packages) |
+| Install Command | leave default, or `pnpm install --no-frozen-lockfile` |
+| Build Command | leave default (`pnpm build` → `prisma generate && next build`) |
+| Output Directory | leave default (`.next`) |
+| Node.js Version | 20.x |
+
+`vercel.json` in the repo already pins the framework, install and build commands.
+
+**Environment variables** (Project → Settings → Environment Variables)
+
+| Variable | Required | Notes |
+| --- | --- | --- |
+| `DATABASE_URL` | ✅ | Postgres connection string. With Vercel Postgres, copy `POSTGRES_PRISMA_URL`. |
+| `SESSION_SECRET` | recommended | Long random string for signing session cookies. |
+| `NEXT_PUBLIC_WS_URL` | optional | Leave **empty** on Vercel — serverless can't host the long-lived ws server, so the client falls back to a simulated in-browser feed. Set it only if you self-host `pnpm ws` somewhere. |
+
+**After the first deploy**, seed the database once (from your machine, pointing at the prod DB):
+
+```bash
+DATABASE_URL="<your-prod-postgres-url>" pnpm db:push
+DATABASE_URL="<your-prod-postgres-url>" pnpm db:seed
+```
+
+The app is **build-safe and runtime-resilient**: it builds with no DB connection, and if the DB
+is unreachable at runtime every page still renders (empty states) instead of erroring — so a
+missing/misconfigured `DATABASE_URL` won't produce platform 404/500s.
 
 Other scripts:
 

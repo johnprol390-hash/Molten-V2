@@ -39,12 +39,18 @@ export function getSessionUserId(): string | null {
   return verify(cookies().get(COOKIE)?.value);
 }
 
-/** Resolve the current user, or fall back to the seeded demo user. */
+/** Resolve the current user, or fall back to the seeded demo user. Never throws. */
 export async function currentUser() {
-  const id = getSessionUserId();
-  if (id) {
-    const u = await prisma.user.findUnique({ where: { id } });
-    if (u) return u;
+  if (!process.env.DATABASE_URL) return null;
+  try {
+    const id = getSessionUserId();
+    if (id) {
+      const u = await prisma.user.findUnique({ where: { id } });
+      if (u) return u;
+    }
+    return await prisma.user.findFirst();
+  } catch (err) {
+    console.error("[session] currentUser failed:", err instanceof Error ? err.message : err);
+    return null;
   }
-  return prisma.user.findFirst();
 }
