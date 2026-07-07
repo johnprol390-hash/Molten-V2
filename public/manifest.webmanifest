@@ -1,0 +1,16 @@
+{
+  "name": "Molten — Hyperliquid Launchpad & Terminal",
+  "short_name": "Molten",
+  "description": "Launch, discover, trade and analyze meme tokens on Hyperliquid with pro-grade safety analytics.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0A0A0A",
+  "theme_color": "#0A0A0A",
+  "categories": ["finance", "productivity"],
+  "icons": [
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
