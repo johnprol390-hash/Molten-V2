@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { LiveStats } from "@/components/landing/LiveStats";
 import { TrendingCarousel } from "@/components/landing/TrendingCarousel";
-import { FaqSection } from "@/components/landing/FaqSection";
+import { Reveal } from "@/components/ui/Reveal";
 import { queryTokens } from "@/lib/queries";
 import {
   Zap,
@@ -45,7 +45,7 @@ export default async function LandingPage() {
         <div className="relative mx-auto max-w-[1100px] px-4 pb-16 pt-20 text-center sm:pt-28">
           <div className="mx-auto mb-5 flex w-fit items-center gap-2 rounded-full border border-mint/25 bg-mint/5 px-3 py-1 text-xs text-mint">
             <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-mint" />
-            Live on Hyperliquid · Simulation preview
+            Live on Hyperliquid
           </div>
           <h1 className="mx-auto max-w-4xl text-4xl font-bold leading-tight tracking-tight sm:text-6xl">
             Launch the Next Viral Token on{" "}
@@ -83,22 +83,23 @@ export default async function LandingPage() {
 
       {/* Features */}
       <section className="mx-auto max-w-[1600px] px-4 py-16">
-        <h2 className="text-center text-2xl font-bold sm:text-3xl">Everything a degen needs, done right</h2>
-        <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/50">
-          50% Axiom Pro terminal density, 30% Hyperliquid precision, 15% Pump.fun energy.
-        </p>
+        <Reveal>
+          <h2 className="text-center text-2xl font-bold sm:text-3xl">Everything a degen needs, done right</h2>
+          <p className="mx-auto mt-2 max-w-xl text-center text-sm text-white/50">
+            50% Axiom Pro terminal density, 30% Hyperliquid precision, 15% Pump.fun energy.
+          </p>
+        </Reveal>
         <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {FEATURES.map((f) => (
-            <div
-              key={f.title}
-              className="panel group p-5 transition-all hover:border-mint/25"
-            >
-              <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 ${f.color}`}>
-                <f.icon size={20} />
+          {FEATURES.map((f, i) => (
+            <Reveal key={f.title} delay={(i % 3) * 0.06}>
+              <div className="panel group h-full p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-mint/25 hover:shadow-glow">
+                <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-white/5 transition-transform duration-300 group-hover:scale-110 ${f.color}`}>
+                  <f.icon size={20} />
+                </div>
+                <h3 className="text-base font-semibold">{f.title}</h3>
+                <p className="mt-1.5 text-sm text-white/50">{f.desc}</p>
               </div>
-              <h3 className="text-base font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-white/50">{f.desc}</p>
-            </div>
+            </Reveal>
           ))}
         </div>
       </section>
@@ -108,8 +109,9 @@ export default async function LandingPage() {
         <div className="mx-auto max-w-[1600px] px-4">
           <h2 className="text-center text-2xl font-bold sm:text-3xl">Roadmap</h2>
           <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {ROADMAP.map((r) => (
-              <div key={r.q} className="panel-flat p-5">
+            {ROADMAP.map((r, i) => (
+              <Reveal key={r.q} delay={(i % 3) * 0.06} className="h-full">
+              <div className="panel-flat h-full p-5 transition-colors hover:border-mint/20">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold uppercase tracking-wide text-mint">{r.q}</span>
                   <span
@@ -130,12 +132,11 @@ export default async function LandingPage() {
                   ))}
                 </ul>
               </div>
+              </Reveal>
             ))}
           </div>
         </div>
       </section>
-
-      <FaqSection />
 
       {/* CTA / Footer band */}
       <section className="mx-auto max-w-[1600px] px-4 py-16 text-center">

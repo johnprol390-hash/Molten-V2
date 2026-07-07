@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/store/useAppStore";
 import { Modal } from "@/components/ui/Modal";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { getWallet, getToken } from "@/lib/mock";
 import { Rand } from "@/lib/rng";
-import { formatUsd, formatPct, truncateAddress, formatAge, pnlColor } from "@/lib/format";
+import { formatUsd, formatPct, truncateAddress, formatAge, timeAgo, pnlColor } from "@/lib/format";
 import {
   Target,
   Copy,
@@ -25,6 +25,22 @@ export function TraderModal() {
     useAppStore();
   const open = !!traderModalAddress;
   const address = traderModalAddress ?? "";
+
+  const [activity, setActivity] = useState<any | null>(null);
+  useEffect(() => {
+    if (!address) {
+      setActivity(null);
+      return;
+    }
+    let cancelled = false;
+    fetch(`/api/wallet/${address}`)
+      .then((r) => r.json())
+      .then((d) => !cancelled && setActivity(d))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [address]);
 
   const data = useMemo(() => {
     if (!address) return null;
@@ -121,29 +137,66 @@ export function TraderModal() {
         </div>
       )}
 
+      {activity?.stats?.tradeCount > 0 && (
+        <div className="mt-3 grid grid-cols-4 gap-2 rounded-lg border border-white/6 bg-white/3 p-2 text-center">
+          <MiniStat label="Volume" value={formatUsd(activity.stats.volume)} />
+          <MiniStat label="Trades" value={String(activity.stats.tradeCount)} />
+          <MiniStat label="Tokens" value={String(activity.stats.tokensTraded)} />
+          <MiniStat
+            label="Realized"
+            value={activity.stats.realizedPnl != null ? formatUsd(activity.stats.realizedPnl) : "—"}
+            color={activity.stats.realizedPnl != null ? pnlColor(activity.stats.realizedPnl) : undefined}
+          />
+        </div>
+      )}
+
       <div className="mt-3">
-        <div className="mb-1.5 text-[10px] uppercase tracking-wide text-white/40">Recent positions</div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <span className="text-[10px] uppercase tracking-wide text-white/40">
+            {activity?.trades?.length ? "Trade history" : "Recent positions"}
+          </span>
+          {activity?.trades?.length ? <span className="text-[9px] text-mint">live on-chain</span> : null}
+        </div>
         <div className="max-h-40 overflow-y-auto rounded-lg border border-white/6">
           <table className="w-full text-left text-xs">
             <tbody>
-              {positions.map((p, i) => (
-                <tr key={i} className="border-b border-white/4 last:border-0">
-                  <td className="px-2 py-1.5">
-                    {p.token ? (
-                      <Link href={`/token/${p.token.id}`} onClick={closeTraderModal} className="flex items-center gap-1.5 hover:text-mint">
-                        <span>{p.token.logo}</span>
-                        <span className="font-medium">{p.token.ticker}</span>
+              {activity?.trades?.length ? (
+                activity.trades.map((t: any) => (
+                  <tr key={t.id} className="border-b border-white/4 last:border-0">
+                    <td className="px-2 py-1.5">
+                      <Link href={`/token/${t.tokenId}`} onClick={closeTraderModal} className="flex items-center gap-1.5 hover:text-mint">
+                        <span>{t.logo}</span>
+                        <span className="font-medium">{t.ticker}</span>
                       </Link>
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                  <td className="tnum px-2 py-1.5 text-white/50">{formatUsd(p.size)}</td>
-                  <td className={cn("tnum px-2 py-1.5 text-right", pnlColor(p.pnl))}>{formatUsd(p.pnl)}</td>
-                  <td className={cn("tnum px-2 py-1.5 text-right", pnlColor(p.roi))}>{formatPct(p.roi)}</td>
-                  <td className="px-2 py-1.5 text-right text-white/30">{formatAge(p.hold)}</td>
-                </tr>
-              ))}
+                    </td>
+                    <td className={cn("px-2 py-1.5 text-[10px] font-semibold uppercase", t.side === "buy" ? "text-gain" : "text-loss")}>
+                      {t.side}
+                    </td>
+                    <td className="tnum px-2 py-1.5 text-right text-white/60">{formatUsd(t.usd)}</td>
+                    <td className="tnum px-2 py-1.5 text-right text-white/40">${t.price.toPrecision(4)}</td>
+                    <td className="px-2 py-1.5 text-right text-white/30">{timeAgo(t.ts)}</td>
+                  </tr>
+                ))
+              ) : (
+                positions.map((p, i) => (
+                  <tr key={i} className="border-b border-white/4 last:border-0">
+                    <td className="px-2 py-1.5">
+                      {p.token ? (
+                        <Link href={`/token/${p.token.id}`} onClick={closeTraderModal} className="flex items-center gap-1.5 hover:text-mint">
+                          <span>{p.token.logo}</span>
+                          <span className="font-medium">{p.token.ticker}</span>
+                        </Link>
+                      ) : (
+                        "—"
+                      )}
+                    </td>
+                    <td className="tnum px-2 py-1.5 text-white/50">{formatUsd(p.size)}</td>
+                    <td className={cn("tnum px-2 py-1.5 text-right", pnlColor(p.pnl))}>{formatUsd(p.pnl)}</td>
+                    <td className={cn("tnum px-2 py-1.5 text-right", pnlColor(p.roi))}>{formatPct(p.roi)}</td>
+                    <td className="px-2 py-1.5 text-right text-white/30">{formatAge(p.hold)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

@@ -8,7 +8,9 @@ import { usePrefs } from "@/store/usePrefs";
 import { constants } from "@/lib/mock";
 import { formatHype, compactNumber, formatPct } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { Zap, Settings2, ChevronDown } from "lucide-react";
+import { Zap, Settings2, ChevronDown, ShieldAlert } from "lucide-react";
+import { Modal } from "@/components/ui/Modal";
+import { riskColor } from "@/lib/safety";
 
 const ORDER_TYPES = ["Market", "Limit", "TWAP", "Stop-Loss", "Take-Profit"] as const;
 const QUICK_HYPE = [0.1, 0.5, 1, 5];
@@ -24,9 +26,13 @@ export function TradeWidget({ token }: { token: Token }) {
   const [toast, setToast] = useState<string | null>(null);
 
   const paper = usePrefs((s) => s.paperTrading);
+  const riskGuard = usePrefs((s) => s.riskGuard);
+  const riskGuardThreshold = usePrefs((s) => s.riskGuardThreshold);
   const preset = presets.find((p) => p.id === activePreset)!;
   const numAmount = parseFloat(amount) || 0;
   const connected = wallets.length > 0;
+  const [riskConfirm, setRiskConfirm] = useState(false);
+  const isRisky = token.risk.score >= riskGuardThreshold;
 
   const quote = useMemo(() => {
     if (numAmount <= 0) return null;
@@ -51,8 +57,20 @@ export function TradeWidget({ token }: { token: Token }) {
   }, [numAmount, side, token]);
 
   const [pending, setPending] = useState(false);
+
+  // Entry point from the button: apply the risk guard before executing a buy.
+  const attemptTrade = () => {
+    if (pending) return;
+    if (side === "buy" && riskGuard && isRisky) {
+      setRiskConfirm(true);
+      return;
+    }
+    void fire();
+  };
+
   const fire = async () => {
     if (pending) return;
+    setRiskConfirm(false);
     // Anti-fat-finger guard (#59): confirm unusually large buys.
     if (side === "buy" && numAmount >= 10 && typeof window !== "undefined") {
       if (!window.confirm(`Confirm large buy of ${numAmount} HYPE of ${token.ticker}?`)) return;
@@ -214,7 +232,7 @@ export function TradeWidget({ token }: { token: Token }) {
 
       {/* Action */}
       <button
-        onClick={fire}
+        onClick={attemptTrade}
         disabled={!connected || pending}
         className={cn(
           "mt-3 flex items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40",
@@ -228,6 +246,43 @@ export function TradeWidget({ token }: { token: Token }) {
       {toast && (
         <div className="mt-2 rounded-md bg-gain/15 px-2 py-1.5 text-center text-[11px] text-gain">{toast}</div>
       )}
+
+      {/* Risk-guard interstitial (can be disabled in Settings) */}
+      <Modal open={riskConfirm} onClose={() => setRiskConfirm(false)} title="High-risk token" className="max-w-sm">
+        <div className="flex items-start gap-3">
+          <div className="mt-0.5 text-loss">
+            <ShieldAlert size={22} />
+          </div>
+          <div className="text-sm text-white/70">
+            <p>
+              <span className="font-semibold text-white">{token.name}</span> has a Risk Score of{" "}
+              <span className={cn("font-bold", riskColor(token.risk.level))}>{token.risk.score}/100</span>, above your
+              guard threshold ({riskGuardThreshold}).
+            </p>
+            <ul className="mt-2 space-y-0.5 text-xs text-white/50">
+              {token.safety.snipersPct > 15 && <li>• {token.safety.snipersPct.toFixed(0)}% held by snipers</li>}
+              {token.safety.lpBurnedPct < 99 && <li>• LP only {token.safety.lpBurnedPct.toFixed(0)}% burned</li>}
+              {!token.safety.mintRevoked && <li>• Mint authority still live</li>}
+              {token.safety.top10Pct > 40 && <li>• Top 10 hold {token.safety.top10Pct.toFixed(0)}%</li>}
+            </ul>
+          </div>
+        </div>
+        <div className="mt-4 flex gap-2">
+          <button
+            onClick={() => setRiskConfirm(false)}
+            className="flex-1 rounded-lg border border-white/12 bg-white/5 py-2 text-sm font-semibold hover:border-white/25"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => void fire()}
+            className="flex-1 rounded-lg bg-loss py-2 text-sm font-bold text-white hover:bg-loss/90"
+          >
+            Buy anyway
+          </button>
+        </div>
+        <p className="mt-2 text-center text-[10px] text-white/30">Disable this guard in Settings → Trading.</p>
+      </Modal>
     </div>
   );
 }

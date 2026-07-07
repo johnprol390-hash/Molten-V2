@@ -63,6 +63,24 @@ export default function SettingsPage() {
 
       <Section title="Trading">
         <Toggle label="Paper trading" hint="Practice with a simulated balance (#28)" value={prefs.paperTrading} onChange={(v) => prefs.set("paperTrading", v)} />
+        <Toggle
+          label="Risk trade guard"
+          hint="Show a confirmation before buying high-risk tokens. Turn off to trade risky coins without interruption."
+          value={prefs.riskGuard}
+          onChange={(v) => prefs.set("riskGuard", v)}
+        />
+        {prefs.riskGuard && (
+          <Row label={`Guard threshold: Risk ≥ ${prefs.riskGuardThreshold}`} hint="Only warn at or above this Risk Score">
+            <input
+              type="range"
+              min={20}
+              max={100}
+              value={prefs.riskGuardThreshold}
+              onChange={(e) => prefs.set("riskGuardThreshold", Number(e.target.value))}
+              className="w-40 accent-mint"
+            />
+          </Row>
+        )}
         <Row label="Daily loss cap" hint="Lock trading after losing this much (#144). 0 = off">
           <input
             type="number"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { getWallet, getTokens } from "@/lib/mock";
@@ -8,15 +8,24 @@ import { Rand } from "@/lib/rng";
 import { useAppStore } from "@/store/useAppStore";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { Badge } from "@/components/ui/Badge";
-import { formatUsd, formatPct, truncateAddress, formatAge, pnlColor } from "@/lib/format";
+import { formatUsd, formatPct, truncateAddress, formatAge, timeAgo, pnlColor } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { Target, Copy, Check } from "lucide-react";
+import { Target, Copy, Bell, Check } from "lucide-react";
 
 export default function WalletProfilePage() {
   const params = useParams();
   const address = String(params.address);
-  const { toggleTracked, isTracked } = useAppStore();
+  const { toggleTracked, isTracked, openTracking } = useAppStore();
   const tracked = isTracked(address);
+
+  const [activity, setActivity] = useState<any | null>(null);
+  useEffect(() => {
+    fetch(`/api/wallet/${address}`)
+      .then((r) => r.json())
+      .then(setActivity)
+      .catch(() => {});
+  }, [address]);
+  const realTrades: any[] = activity?.trades ?? [];
 
   const { wallet, curve, trades } = useMemo(() => {
     const w = getWallet(address);
@@ -57,13 +66,27 @@ export default function WalletProfilePage() {
           </div>
           <div className="text-xs text-white/40">Wallet age {formatAge(wallet.ageMs)} · {wallet.trades} trades</div>
         </div>
-        <button
-          onClick={() => toggleTracked(address, wallet.isKol ? wallet.kolName : undefined)}
-          className={cn("ml-auto flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium", tracked ? "border-mint/40 bg-mint/15 text-mint" : "border-white/10 hover:border-mint/30")}
-        >
-          {tracked ? <Check size={15} /> : <Target size={15} />}
-          {tracked ? "Tracking" : "Track Wallet"}
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={() => openTracking(address, wallet.isKol ? wallet.kolName : undefined, "copy")}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium hover:border-mint/40 hover:text-mint"
+          >
+            <Copy size={15} /> Copy
+          </button>
+          <button
+            onClick={() => openTracking(address, wallet.isKol ? wallet.kolName : undefined, "alert")}
+            className="flex items-center gap-1.5 rounded-lg border border-white/10 px-3 py-2 text-sm font-medium hover:border-mint/40 hover:text-mint"
+          >
+            <Bell size={15} /> Alert
+          </button>
+          <button
+            onClick={() => toggleTracked(address, wallet.isKol ? wallet.kolName : undefined)}
+            className={cn("flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium", tracked ? "border-mint/40 bg-mint/15 text-mint" : "border-white/10 hover:border-mint/30")}
+          >
+            {tracked ? <Check size={15} /> : <Target size={15} />}
+            {tracked ? "Tracking" : "Track"}
+          </button>
+        </div>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-4">
@@ -79,25 +102,43 @@ export default function WalletProfilePage() {
           <Sparkline data={curve} width={300} height={120} />
         </div>
         <div className="panel-flat lg:col-span-2">
-          <div className="border-b border-white/6 px-3 py-2.5 text-sm font-semibold">Trade History</div>
+          <div className="flex items-center justify-between border-b border-white/6 px-3 py-2.5">
+            <span className="text-sm font-semibold">Trade History</span>
+            {realTrades.length > 0 && <span className="text-[10px] text-mint">live on-chain · {activity?.stats?.tradeCount} trades</span>}
+          </div>
           <div className="max-h-[360px] overflow-y-auto">
             <table className="w-full text-xs">
               <tbody>
-                {trades.map((t, i) => (
-                  <tr key={i} className="border-b border-white/4 hover:bg-white/4">
-                    <td className="px-3 py-2">
-                      <Link href={`/token/${t.token.id}`} className="flex items-center gap-1.5 hover:text-mint">
-                        <span>{t.token.logo}</span>
-                        <span className="font-medium">{t.token.ticker}</span>
-                      </Link>
-                    </td>
-                    <td className={cn("px-3 py-2 text-[10px] font-semibold uppercase", t.side === "buy" ? "text-gain" : "text-loss")}>{t.side}</td>
-                    <td className="tnum px-3 py-2 text-right text-white/50">{formatUsd(t.size)}</td>
-                    <td className={cn("tnum px-3 py-2 text-right", pnlColor(t.pnl))}>{formatUsd(t.pnl)}</td>
-                    <td className={cn("tnum px-3 py-2 text-right", pnlColor(t.roi))}>{formatPct(t.roi)}</td>
-                    <td className="px-3 py-2 text-right text-white/30">{formatAge(t.hold)}</td>
-                  </tr>
-                ))}
+                {realTrades.length > 0
+                  ? realTrades.map((t) => (
+                      <tr key={t.id} className="border-b border-white/4 hover:bg-white/4">
+                        <td className="px-3 py-2">
+                          <Link href={`/token/${t.tokenId}`} className="flex items-center gap-1.5 hover:text-mint">
+                            <span>{t.logo}</span>
+                            <span className="font-medium">{t.ticker}</span>
+                          </Link>
+                        </td>
+                        <td className={cn("px-3 py-2 text-[10px] font-semibold uppercase", t.side === "buy" ? "text-gain" : "text-loss")}>{t.side}</td>
+                        <td className="tnum px-3 py-2 text-right text-white/50">{formatUsd(t.usd)}</td>
+                        <td className="tnum px-3 py-2 text-right text-white/40">${t.price.toPrecision(4)}</td>
+                        <td className="px-3 py-2 text-right text-white/30">{timeAgo(t.ts)}</td>
+                      </tr>
+                    ))
+                  : trades.map((t, i) => (
+                      <tr key={i} className="border-b border-white/4 hover:bg-white/4">
+                        <td className="px-3 py-2">
+                          <Link href={`/token/${t.token.id}`} className="flex items-center gap-1.5 hover:text-mint">
+                            <span>{t.token.logo}</span>
+                            <span className="font-medium">{t.token.ticker}</span>
+                          </Link>
+                        </td>
+                        <td className={cn("px-3 py-2 text-[10px] font-semibold uppercase", t.side === "buy" ? "text-gain" : "text-loss")}>{t.side}</td>
+                        <td className="tnum px-3 py-2 text-right text-white/50">{formatUsd(t.size)}</td>
+                        <td className={cn("tnum px-3 py-2 text-right", pnlColor(t.pnl))}>{formatUsd(t.pnl)}</td>
+                        <td className={cn("tnum px-3 py-2 text-right", pnlColor(t.roi))}>{formatPct(t.roi)}</td>
+                        <td className="px-3 py-2 text-right text-white/30">{formatAge(t.hold)}</td>
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>

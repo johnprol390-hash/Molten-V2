@@ -204,6 +204,72 @@ export function queryPositions(userId: string) {
   );
 }
 
+export function queryWalletActivity(address: string) {
+  const addr = address.toLowerCase();
+  return safe(
+    async () => {
+      const trades = await prisma.trade.findMany({
+        where: { wallet: { in: [address, addr] } },
+        orderBy: { ts: "desc" },
+        take: 50,
+        include: { token: { select: { id: true, ticker: true, logo: true, price: true } } },
+      });
+
+      let boughtUsd = 0;
+      let soldUsd = 0;
+      const tokenSet = new Set<string>();
+      for (const t of trades) {
+        if (t.side === "buy") boughtUsd += t.usd;
+        else soldUsd += t.usd;
+        tokenSet.add(t.tokenId);
+      }
+
+      // If this wallet maps to a registered user, surface real positions + PnL.
+      const user = await prisma.user.findUnique({ where: { address: addr } });
+      let realizedPnl: number | null = null;
+      let unrealizedPnl: number | null = null;
+      let positions: any[] = [];
+      if (user) {
+        positions = await queryPositions(user.id);
+        realizedPnl = positions.reduce((s, p) => s + p.realized, 0);
+        unrealizedPnl = positions.reduce((s, p) => s + p.unrealized, 0);
+      }
+
+      return {
+        isUser: Boolean(user),
+        trades: trades.map((t) => ({
+          id: t.id,
+          ts: new Date(t.ts).getTime(),
+          side: t.side,
+          usd: t.usd,
+          price: t.price,
+          amountHype: t.amountHype,
+          tokenId: t.tokenId,
+          ticker: t.token?.ticker ?? "",
+          logo: t.token?.logo ?? "",
+        })),
+        positions,
+        stats: {
+          boughtUsd,
+          soldUsd,
+          volume: boughtUsd + soldUsd,
+          tradeCount: trades.length,
+          tokensTraded: tokenSet.size,
+          realizedPnl,
+          unrealizedPnl,
+        },
+      };
+    },
+    {
+      isUser: false,
+      trades: [] as any[],
+      positions: [] as any[],
+      stats: { boughtUsd: 0, soldUsd: 0, volume: 0, tradeCount: 0, tokensTraded: 0, realizedPnl: null, unrealizedPnl: null },
+    },
+    "queryWalletActivity",
+  );
+}
+
 export function queryAdminStats() {
   return safe(
     async () => {

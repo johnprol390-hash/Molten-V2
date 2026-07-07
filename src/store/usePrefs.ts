@@ -14,6 +14,8 @@ export interface Prefs {
   paperTrading: boolean;
   accent: string;
   dailyLossCap: number; // 0 = off (responsible trading, #144)
+  riskGuard: boolean; // warn before buying risky tokens
+  riskGuardThreshold: number; // block/warn at or above this Risk Score
 }
 
 const DEFAULTS: Prefs = {
@@ -25,6 +27,8 @@ const DEFAULTS: Prefs = {
   paperTrading: false,
   accent: "#97FCE4",
   dailyLossCap: 0,
+  riskGuard: true,
+  riskGuardThreshold: 70,
 };
 
 const KEY = "molten:prefs";
