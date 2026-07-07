@@ -1,6 +1,7 @@
 import { queryPointsSummary } from "@/lib/queries";
 import { compactNumber } from "@/lib/format";
 import { Trophy, Zap } from "lucide-react";
+import { QuestsPanel } from "@/components/points/QuestsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -40,6 +41,10 @@ export default async function PointsPage() {
           <div className="h-full rounded-full bg-mint" style={{ width: `${progress}%` }} />
         </div>
         <div className="mt-1 text-[11px] text-white/40">{(5000 - (points % 5000)).toLocaleString()} points to level {level + 1}</div>
+      </div>
+
+      <div className="mb-3">
+        <QuestsPanel />
       </div>
 
       <div className="grid gap-3 lg:grid-cols-2">

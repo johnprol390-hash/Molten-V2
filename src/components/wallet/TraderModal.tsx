@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/cn";
 
 export function TraderModal() {
-  const { traderModalAddress, traderModalToken, closeTraderModal, toggleTracked, isTracked } =
+  const { traderModalAddress, traderModalToken, closeTraderModal, toggleTracked, isTracked, openTracking } =
     useAppStore();
   const open = !!traderModalAddress;
   const address = traderModalAddress ?? "";
@@ -156,8 +156,8 @@ export function TraderModal() {
           icon={tracked ? <Check size={14} /> : <Target size={14} />}
           label={tracked ? "Tracked" : "Track"}
         />
-        <ActionBtn icon={<Copy size={14} />} label="Copy Trade" />
-        <ActionBtn icon={<Bell size={14} />} label="Set Alert" />
+        <ActionBtn icon={<Copy size={14} />} label="Copy Trade" onClick={() => openTracking(address, w.isKol ? w.kolName : undefined, "copy")} />
+        <ActionBtn icon={<Bell size={14} />} label="Set Alert" onClick={() => openTracking(address, w.isKol ? w.kolName : undefined, "alert")} />
         <ActionBtn icon={<UserPlus size={14} />} label="Full Profile" href={`/wallet/${address}`} onNavigate={closeTraderModal} />
         <ActionBtn icon={<Copy size={14} />} label="Copy Addr" onClick={() => navigator.clipboard?.writeText(address)} />
         <ActionBtn icon={<ExternalLink size={14} />} label="Explorer" />

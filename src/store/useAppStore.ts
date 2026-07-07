@@ -54,6 +54,12 @@ interface AppState {
   openTraderModal: (address: string, tokenId?: string) => void;
   closeTraderModal: () => void;
 
+  // Copy-trade / alert config modal
+  trackingTarget: { address: string; name?: string } | null;
+  trackingMode: "copy" | "alert";
+  openTracking: (address: string, name: string | undefined, mode: "copy" | "alert") => void;
+  closeTracking: () => void;
+
   // Connection
   connection: "connected" | "reconnecting" | "offline";
   setConnection: (c: AppState["connection"]) => void;
@@ -144,6 +150,11 @@ export const useAppStore = create<AppState>((set, get) => ({
   openTraderModal: (address, tokenId) =>
     set({ traderModalAddress: address, traderModalToken: tokenId }),
   closeTraderModal: () => set({ traderModalAddress: null, traderModalToken: undefined }),
+
+  trackingTarget: null,
+  trackingMode: "copy",
+  openTracking: (address, name, mode) => set({ trackingTarget: { address, name }, trackingMode: mode }),
+  closeTracking: () => set({ trackingTarget: null }),
 
   connection: "connected",
   setConnection: (c) => set({ connection: c }),

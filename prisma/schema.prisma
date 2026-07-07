@@ -314,3 +314,76 @@ model AnalyticsPoint {
 
   @@index([metric])
 }
+
+// ── Tracking layer (copy trading + buy alerts) ───────────────────────────────
+model CopyTradeConfig {
+  id             String   @id @default(cuid())
+  userId         String
+  sourceAddress  String
+  sourceName     String?
+  active         Boolean  @default(true)
+  ratio          Float    @default(0.1) // fraction of source trade size
+  maxPerTradeHype Float   @default(1)
+  dailyCapHype   Float    @default(10)
+  spentTodayHype Float    @default(0)
+  spentDay       String   @default("") // yyyy-mm-dd bucket for the cap
+  maxRisk        Int      @default(66) // skip tokens with riskScore above this
+  requireLpBurned Boolean @default(false)
+  copySell       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  @@unique([userId, sourceAddress])
+  @@index([userId])
+}
+
+model WalletAlertConfig {
+  id            String   @id @default(cuid())
+  userId        String
+  sourceAddress String
+  sourceName    String?
+  onBuy         Boolean  @default(true)
+  onSell        Boolean  @default(false)
+  minUsd        Float    @default(0)
+  firstBuyOnly  Boolean  @default(false)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+
+  @@unique([userId, sourceAddress])
+  @@index([userId])
+}
+
+model CopyTrade {
+  id            String   @id @default(cuid())
+  userId        String
+  sourceAddress String
+  sourceName    String?
+  tokenId       String
+  ticker        String
+  side          String
+  usd           Float
+  sourcePrice   Float
+  execPrice     Float
+  ts            DateTime @default(now())
+
+  @@index([userId])
+}
+
+// Idempotency for the tracking engine — one event processed once per config.
+model ProcessedEvent {
+  id  String @id @default(cuid())
+  key String @unique
+  ts  DateTime @default(now())
+}
+
+// Gamification: which daily quests a user has claimed.
+model QuestClaim {
+  id       String   @id @default(cuid())
+  userId   String
+  questKey String
+  day      String // yyyy-mm-dd
+  points   Int
+  ts       DateTime @default(now())
+
+  @@unique([userId, questKey, day])
+  @@index([userId])
+}

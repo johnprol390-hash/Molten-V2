@@ -28,9 +28,9 @@ const ROADMAP = [
   { q: "Phase 1", title: "Foundation", items: ["Wallet connect + SIWE", "Design system", "Seeded simulation"], done: true },
   { q: "Phase 2", title: "Core Terminal", items: ["Axiom-grade token page", "Live trade widget", "Safety panel"], done: true },
   { q: "Phase 3", title: "Launch & Curve", items: ["Bonding curve engine", "6-step launch wizard", "Discover Pulse"], done: true },
-  { q: "Phase 4", title: "Tracking Layer", items: ["KOL directory", "Copy trading", "Buy alerts"], done: false },
-  { q: "Phase 5", title: "Ecosystem", items: ["Governance", "Points & quests", "Referrals"], done: false },
-  { q: "Phase 6", title: "Pro & Polish", items: ["AI features", "Admin suite", "Mobile PWA"], done: false },
+  { q: "Phase 4", title: "Tracking Layer", items: ["KOL directory", "Copy trading", "Buy alerts"], done: true },
+  { q: "Phase 5", title: "Ecosystem", items: ["Governance", "Points & quests", "Referrals"], done: true },
+  { q: "Phase 6", title: "Pro & Polish", items: ["AI features", "Admin suite", "Mobile PWA"], done: true },
 ];
 
 export const dynamic = "force-dynamic";

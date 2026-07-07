@@ -195,9 +195,22 @@ streamer mode, table density, sound alerts, reduced motion, paper trading, anti-
 net-flow gauge, Fear/Greed index, recently-viewed bar, CSV export, status page, and more — while
 the remainder are transparently flagged as planned.
 
+## Tracking layer, quests & PWA
+
+- **Copy trading** — configure per-source rules (size ratio, max per trade, daily cap, max risk,
+  LP-burned filter, copy-sell) from any KOL/wallet; a server engine (`/api/engine/tick`, polled by
+  the client) mirrors their trades through the real bonding-curve executor and logs every copy.
+  Manage it all at `/copy-trading`.
+- **Buy alerts** — per-wallet alert rules (buys/sells, min size, first-buy-only) that generate
+  in-app notifications when a tracked wallet trades.
+- **Daily quests** — live progress computed from your on-chain activity (trades, votes, chat,
+  tracking, positions) with claimable point rewards on `/points`.
+- **Mobile PWA** — installable web app: `manifest.webmanifest`, maskable icon, theme color, a
+  service worker for offline caching, and an `/offline` fallback.
+
 ## Status
 
-Phases 1–5 of the master roadmap are substantially implemented, backed by a **real persistent
-database, REST API, session auth and WebSocket server**, plus the Phase 6 feature-flag registry.
-Remaining deep items: worker-driven copy-trading (needs Redis), real Hyperliquid SDK wiring, and
-the features still marked `soon` in the registry.
+Phases 1–6 of the master roadmap are implemented, backed by a **real persistent database, REST API,
+session auth, WebSocket server, and a tracking engine**. The 150-feature registry (`/features`)
+tracks per-feature rollout. Remaining deep items: real Hyperliquid SDK order routing and the
+features still marked `soon` in the registry (Redis/BullMQ workers, GraphQL API, i18n, etc.).

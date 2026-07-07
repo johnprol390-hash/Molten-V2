@@ -18,6 +18,7 @@ const LINKS = [
 
 const MORE_LINKS = [
   { href: "/ai", label: "AI Studio" },
+  { href: "/copy-trading", label: "Copy Trading" },
   { href: "/multichart", label: "Multi-Chart" },
   { href: "/compare", label: "Compare Tokens" },
   { href: "/narratives", label: "Narratives" },

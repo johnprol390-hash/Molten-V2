@@ -40,7 +40,7 @@ export const FEATURES: Feature[] = [
   { n: 22, title: "Embedded live X/Twitter feed", group: "Social", status: "soon" },
   { n: 23, title: "Token SEO / OG cards", group: "Infra", status: "beta" },
   { n: 24, title: "Shareable referral QR codes", group: "Growth", status: "beta", href: "/referrals" },
-  { n: 25, title: "Mobile PWA with push", group: "Mobile", status: "soon" },
+  { n: 25, title: "Mobile PWA (installable + offline)", group: "Mobile", status: "live" },
   { n: 26, title: "Lite mode toggle", group: "Terminal & UX", status: "live", href: "/settings" },
   { n: 27, title: "Onboarding tour", group: "Terminal & UX", status: "soon" },
   { n: 28, title: "Paper trading mode", group: "Advanced Trading", status: "live", href: "/settings" },
@@ -116,7 +116,7 @@ export const FEATURES: Feature[] = [
   { n: 92, title: "Verified creator program", group: "Creator", status: "beta" },
 
   // ── Gamification 93–100 ───────────────────────────────────────────────────
-  { n: 93, title: "Daily quests", group: "Gamification", status: "beta", href: "/points" },
+  { n: 93, title: "Daily quests", group: "Gamification", status: "live", href: "/points" },
   { n: 94, title: "Weekly trading tournaments", group: "Gamification", status: "soon" },
   { n: 95, title: "Season pass tracks", group: "Gamification", status: "soon" },
   { n: 96, title: "Mystery reward boxes", group: "Gamification", status: "soon" },
@@ -142,7 +142,7 @@ export const FEATURES: Feature[] = [
   // ── Mobile & UX 113–122 ───────────────────────────────────────────────────
   { n: 113, title: "Home-screen widgets", group: "Mobile", status: "soon" },
   { n: 114, title: "Swipe gestures on token cards", group: "Mobile", status: "soon" },
-  { n: 115, title: "Offline mode with cache", group: "Mobile", status: "soon" },
+  { n: 115, title: "Offline mode with cache", group: "Mobile", status: "beta", href: "/offline" },
   { n: 116, title: "Haptic feedback", group: "Mobile", status: "soon" },
   { n: 117, title: "Picture-in-picture mini-chart", group: "Terminal & UX", status: "soon" },
   { n: 118, title: "Table density settings", group: "Terminal & UX", status: "live", href: "/settings" },

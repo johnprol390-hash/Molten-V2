@@ -10,7 +10,10 @@ import { RealtimeProvider } from "@/store/useRealtime";
 import { useAppStore } from "@/store/useAppStore";
 import { PinnedBar } from "./PinnedBar";
 import { PrefsEffects } from "./PrefsEffects";
+import { EngineTick } from "./EngineTick";
+import { PWARegister } from "./PWARegister";
 import { Web3Provider } from "@/components/providers/Web3Provider";
+import { TrackingConfigModal } from "@/components/wallet/TrackingConfigModal";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -49,7 +52,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
         <CommandPalette />
         <TraderModal />
+        <TrackingConfigModal />
         <PrefsEffects />
+        <EngineTick />
+        <PWARegister />
       </RealtimeProvider>
     </Web3Provider>
   );

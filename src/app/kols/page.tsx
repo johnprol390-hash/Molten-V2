@@ -13,7 +13,7 @@ import type { Kol } from "@/lib/mock";
 export default function KolsPage() {
   const kols = getKols();
   const activity = getKolActivity();
-  const { toggleTracked, isTracked } = useAppStore();
+  const { toggleTracked, isTracked, openTracking } = useAppStore();
   const [tf, setTf] = useState<"24H" | "7D" | "30D" | "All">("7D");
 
   const cols: Column<Kol>[] = [
@@ -42,18 +42,40 @@ export default function KolsPage() {
       header: "",
       align: "right",
       render: (k) => (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleTracked(k.address, k.kolName);
-          }}
-          className={cn(
-            "rounded-md border px-2 py-1 text-[11px] font-medium",
-            isTracked(k.address) ? "border-mint/40 bg-mint/15 text-mint" : "border-white/10 text-white/60 hover:border-mint/30",
-          )}
-        >
-          {isTracked(k.address) ? "Following" : "Follow"}
-        </button>
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openTracking(k.address, k.kolName, "copy");
+            }}
+            className="rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/70 hover:border-mint/40 hover:text-mint"
+            title="Copy trade this KOL"
+          >
+            Copy
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              openTracking(k.address, k.kolName, "alert");
+            }}
+            className="rounded-md border border-white/10 px-2 py-1 text-[11px] font-medium text-white/70 hover:border-mint/40 hover:text-mint"
+            title="Set buy alert"
+          >
+            Alert
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleTracked(k.address, k.kolName);
+            }}
+            className={cn(
+              "rounded-md border px-2 py-1 text-[11px] font-medium",
+              isTracked(k.address) ? "border-mint/40 bg-mint/15 text-mint" : "border-white/10 text-white/60 hover:border-mint/30",
+            )}
+          >
+            {isTracked(k.address) ? "✓" : "Follow"}
+          </button>
+        </div>
       ),
     },
   ];
