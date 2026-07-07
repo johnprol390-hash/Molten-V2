@@ -76,25 +76,23 @@ export const useAppStore = create<AppState>((set, get) => ({
   guest: false,
   wallets: [],
   activeWallet: null,
+  // Register an already-authenticated wallet in the UI (auth handled via SIWE).
   connect: (provider, address) =>
     set((s) => {
       const addr = address ?? randomAddress();
-      if (s.wallets.some((w) => w.address === addr)) return s;
+      if (s.wallets.some((w) => w.address.toLowerCase() === addr.toLowerCase())) {
+        return { activeWallet: addr, guest: false };
+      }
       const label = `${provider} ${s.wallets.length + 1}`;
       const wallets = [...s.wallets, { address: addr, provider, label }];
-      // Simulated sign-in-with-wallet: establish a real server session.
-      if (typeof window !== "undefined") {
-        fetch("/api/auth/connect", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ address: addr }),
-        }).catch(() => {});
-      }
       return { wallets, activeWallet: addr, guest: false };
     }),
   disconnect: (address) =>
     set((s) => {
       const wallets = s.wallets.filter((w) => w.address !== address);
+      if (typeof window !== "undefined" && wallets.length === 0) {
+        fetch("/api/auth/logout", { method: "POST" }).catch(() => {});
+      }
       return {
         wallets,
         activeWallet: wallets[0]?.address ?? null,

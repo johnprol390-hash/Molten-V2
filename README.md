@@ -158,9 +158,23 @@ Every wallet address rendered anywhere is a `<WalletLink>` that opens the single
 - `/narratives` — tokens grouped by meta/narrative
 - `/status` — system status + uptime
 
+## Wallet connection & auth (real)
+
+Wallet connect uses **wagmi v3 + viem** with the `injected` connector, so any EIP-1193 browser
+wallet works out of the box: **MetaMask, Rabby, Phantom (EVM), OKX, Trust, Coinbase extension,
+Brave**. Sign-in is real **EIP-4361 (Sign-In With Ethereum)**:
+
+1. `GET /api/auth/nonce` issues a signed, httpOnly nonce
+2. the wallet signs a SIWE message (no gas, no transaction)
+3. `POST /api/auth/verify` verifies the signature with `viem.verifyMessage`, upserts the `User`,
+   and opens a session cookie
+
+The chain is **HyperEVM** (chainId 999). WalletConnect / Coinbase Smart Wallet can be added by
+installing their SDKs and setting `NEXT_PUBLIC_WC_PROJECT_ID`.
+
 ## What's live end-to-end
 
-- **Sign-in-with-wallet** → server session → per-user data
+- **Real Sign-In-With-Ethereum** → server session → per-user data
 - **Real trade execution** on the bonding curve: buy/sell updates price, position, points, and
   broadcasts the fill to every connected client over WebSocket in real time
 - **Per-user positions** shown on the position strip and dashboard, updating live on fills

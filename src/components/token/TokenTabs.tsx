@@ -254,21 +254,68 @@ function DevTokensTab({ token }: { token: Token }) {
   );
 }
 
+interface LivePosition {
+  tokensHeld: number;
+  avgEntryUsd: number;
+  value: number;
+  unrealized: number;
+  realized: number;
+}
+
 function PositionsTab({ token }: { token: Token }) {
   const connected = useAppStore((s) => s.wallets.length > 0);
+  const lastTrade = useRealtime((s) => s.lastTrade);
+  const [pos, setPos] = useState<LivePosition | null>(null);
+  const [closing, setClosing] = useState(false);
+
+  const load = () =>
+    fetch(`/api/positions?tokenId=${token.id}`)
+      .then((r) => r.json())
+      .then((d) => setPos(d.positions?.[0] ?? null))
+      .catch(() => {});
+
+  useEffect(() => {
+    if (connected) load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connected, token.id, lastTrade]);
+
   if (!connected) {
     return <EmptyState title="Connect a wallet to view positions" hint="Your entry, PnL, and quick-close controls appear here." icon="💼" />;
   }
+  if (!pos || pos.tokensHeld <= 0) {
+    return <EmptyState title={`No open position in ${token.ticker}`} hint="Buy on the trade widget to open a position." icon="💼" />;
+  }
+
+  const close = async (pct: number) => {
+    if (closing) return;
+    setClosing(true);
+    try {
+      await fetch("/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId: token.id, side: "sell", amount: (pos.tokensHeld * pct) / 100 }),
+      });
+      await load();
+    } finally {
+      setClosing(false);
+    }
+  };
+
   return (
     <div className="grid gap-2 sm:grid-cols-4">
-      <PosCard label="Entry Avg" value={`$${(token.price * 0.7).toPrecision(4)}`} />
-      <PosCard label="Current Value" value={formatUsd(1240)} />
-      <PosCard label="Unrealized PnL" value={formatUsd(312)} color="text-gain" />
-      <PosCard label="Realized PnL" value={formatUsd(88)} color="text-gain" />
+      <PosCard label="Entry Avg" value={`$${pos.avgEntryUsd.toPrecision(4)}`} />
+      <PosCard label="Current Value" value={formatUsd(pos.value)} />
+      <PosCard label="Unrealized PnL" value={formatUsd(pos.unrealized)} color={pnlColor(pos.unrealized)} />
+      <PosCard label="Realized PnL" value={formatUsd(pos.realized)} color={pnlColor(pos.realized)} />
       <div className="col-span-full flex gap-2">
         {[25, 50, 100].map((p) => (
-          <button key={p} className="flex-1 rounded-lg border border-loss/30 bg-loss/10 py-2 text-sm font-semibold text-loss hover:bg-loss/20">
-            Close {p}%
+          <button
+            key={p}
+            disabled={closing}
+            onClick={() => close(p)}
+            className="flex-1 rounded-lg border border-loss/30 bg-loss/10 py-2 text-sm font-semibold text-loss hover:bg-loss/20 disabled:opacity-50"
+          >
+            {closing ? "…" : `Close ${p}%`}
           </button>
         ))}
       </div>

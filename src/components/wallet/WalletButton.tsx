@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useDisconnect } from "wagmi";
 import { useAppStore } from "@/store/useAppStore";
 import { truncateAddress } from "@/lib/format";
 import { cn } from "@/lib/cn";
@@ -9,8 +10,14 @@ import { WalletConnectModal } from "./WalletConnectModal";
 
 export function WalletButton() {
   const { wallets, activeWallet, guest, setActiveWallet, disconnect } = useAppStore();
+  const { disconnectAsync } = useDisconnect();
   const [modalOpen, setModalOpen] = useState(false);
   const [dropOpen, setDropOpen] = useState(false);
+
+  const handleDisconnect = async (address: string) => {
+    await disconnectAsync().catch(() => {});
+    disconnect(address);
+  };
 
   const connected = wallets.length > 0;
 
@@ -65,7 +72,7 @@ export function WalletButton() {
                   <span className="tnum text-xs">{truncateAddress(w.address)}</span>
                 </button>
                 <button
-                  onClick={() => disconnect(w.address)}
+                  onClick={() => handleDisconnect(w.address)}
                   className="rounded p-1 text-white/30 hover:text-loss"
                   aria-label="Disconnect"
                 >

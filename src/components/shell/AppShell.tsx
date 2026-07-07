@@ -10,6 +10,7 @@ import { RealtimeProvider } from "@/store/useRealtime";
 import { useAppStore } from "@/store/useAppStore";
 import { PinnedBar } from "./PinnedBar";
 import { PrefsEffects } from "./PrefsEffects";
+import { Web3Provider } from "@/components/providers/Web3Provider";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -38,16 +39,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <RealtimeProvider>
-      <div className="flex min-h-screen flex-col">
-        <Nav />
-        {!isLanding && <PinnedBar />}
-        <main className="flex-1">{children}</main>
-        <Footer />
-      </div>
-      <CommandPalette />
-      <TraderModal />
-      <PrefsEffects />
-    </RealtimeProvider>
+    <Web3Provider>
+      <RealtimeProvider>
+        <div className="flex min-h-screen flex-col">
+          <Nav />
+          {!isLanding && <PinnedBar />}
+          <main className="flex-1">{children}</main>
+          <Footer />
+        </div>
+        <CommandPalette />
+        <TraderModal />
+        <PrefsEffects />
+      </RealtimeProvider>
+    </Web3Provider>
   );
 }

@@ -35,6 +35,28 @@ export function clearSession() {
   cookies().delete(COOKIE);
 }
 
+const NONCE_COOKIE = "molten_nonce";
+
+/** Issue a SIWE nonce and stash it (httpOnly) so /verify can check it. */
+export function issueNonce(): string {
+  const nonce = crypto.randomBytes(16).toString("hex");
+  cookies().set(NONCE_COOKIE, nonce, {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 10,
+  });
+  return nonce;
+}
+
+export function readNonce(): string | null {
+  return cookies().get(NONCE_COOKIE)?.value ?? null;
+}
+
+export function clearNonce() {
+  cookies().delete(NONCE_COOKIE);
+}
+
 export function getSessionUserId(): string | null {
   return verify(cookies().get(COOKIE)?.value);
 }

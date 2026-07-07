@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useAppStore } from "@/store/useAppStore";
 import { useLiveValue } from "@/store/useRealtime";
@@ -17,6 +18,26 @@ export function TokenCard({ token }: { token: Token }) {
   const price = useLiveValue(token.price, token.id + ":price", 0.02);
   const change = useLiveValue(token.change24h, token.id + ":chg", 0.03);
   const { money } = useMoney();
+  const connected = useAppStore((s) => s.wallets.length > 0);
+  const [buyState, setBuyState] = useState<"idle" | "buying" | "done" | "err">("idle");
+
+  const instantBuy = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!connected || buyState === "buying") return;
+    setBuyState("buying");
+    try {
+      const res = await fetch("/api/trade", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tokenId: token.id, side: "buy", amount: preset?.amount ?? 0.5 }),
+      });
+      setBuyState(res.ok ? "done" : "err");
+    } catch {
+      setBuyState("err");
+    }
+    setTimeout(() => setBuyState("idle"), 1600);
+  };
 
   const metrics: { label: string; value: string; danger?: boolean }[] = [
     { label: "Top10", value: `${token.safety.top10Pct.toFixed(0)}%`, danger: token.safety.top10Pct > 40 },
@@ -85,13 +106,16 @@ export function TokenCard({ token }: { token: Token }) {
           <span>{timeAgo(token.createdAt)}</span>
         </div>
         <button
-          onClick={(e) => {
-            e.preventDefault();
-          }}
-          className="flex items-center gap-1 rounded-md bg-mint/15 px-2 py-1 text-[11px] font-semibold text-mint opacity-0 transition-opacity group-hover:opacity-100 hover:bg-mint/25"
-          title={`Instant buy ${preset?.amount ?? 0.5} HYPE`}
+          onClick={instantBuy}
+          disabled={!connected || buyState === "buying"}
+          className={cn(
+            "flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-semibold transition-opacity hover:bg-mint/25 disabled:cursor-not-allowed",
+            buyState === "done" ? "bg-gain/20 text-gain opacity-100" : buyState === "err" ? "bg-loss/20 text-loss opacity-100" : "bg-mint/15 text-mint opacity-0 group-hover:opacity-100",
+            !connected && "opacity-0 group-hover:opacity-40",
+          )}
+          title={connected ? `Instant buy ${preset?.amount ?? 0.5} HYPE` : "Connect a wallet to trade"}
         >
-          <Zap size={11} /> {preset?.amount ?? 0.5}
+          <Zap size={11} /> {buyState === "buying" ? "…" : buyState === "done" ? "✓" : preset?.amount ?? 0.5}
         </button>
       </div>
     </Link>
