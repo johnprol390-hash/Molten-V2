@@ -24,11 +24,21 @@ experience. Standard lint/test/build/run commands live in `package.json`
 absent on a fresh VM. If so, create them before running the app:
 
 ```bash
-cp .env.example .env     # DATABASE_URL + NEXT_PUBLIC_WS_URL
-pnpm db:setup            # prisma db push + deterministic seed (20 tokens, KOLs, etc.)
+cp .env.example .env                       # DATABASE_URL + NEXT_PUBLIC_WS_URL + WS_PORT
+set -a; . ./.env; set +a                    # export vars into the shell (see gotcha below)
+pnpm db:setup                               # prisma db push + deterministic seed (20 tokens, KOLs, etc.)
 ```
 
 `pnpm db:setup` is safe to re-run; it re-pushes the schema and re-seeds.
+
+**Gotcha — `tsx` scripts do not read `.env`.** The `tsx`-run scripts
+(`pnpm db:seed`, the seed half of `pnpm db:setup`, and `pnpm ws`) instantiate
+`PrismaClient` directly and do **not** load `.env`, so they fail with
+`Environment variable not found: DATABASE_URL` unless `DATABASE_URL` is already
+exported into the shell. `prisma db push` and `next dev` load `.env` on their
+own; only the raw `tsx` scripts need it exported. Export it once per shell with
+`set -a; . ./.env; set +a` (or `export DATABASE_URL="file:./dev.db"`) before
+running `pnpm db:setup`/`db:seed`/`ws`.
 
 ### Non-obvious notes
 
@@ -39,8 +49,11 @@ pnpm db:setup            # prisma db push + deterministic seed (20 tokens, KOLs,
 - No auth secrets are required: `POST /api/auth/connect` is a simulated
   sign-in-with-wallet (any `0x` hex address works), and requests without a session
   fall back to a built-in `0xdemo…` demo user, so trades can be exercised even
-  without connecting. The core hello-world flow is: connect a wallet → `POST /api/trade`
-  (bonding-curve buy/sell) → position updates via `GET /api/positions`.
+  without connecting. The core hello-world flow is: connect a wallet
+  (`POST /api/auth/connect {"address":"0x…"}`, keep the session cookie) →
+  `POST /api/trade {"tokenId","side":"buy"|"sell","amount":<HYPE>}` (the HYPE
+  size field is `amount`, not `amountHype`) → position updates via
+  `GET /api/positions`.
 - `next.config.mjs` keeps `ws`/Prisma out of the server bundle (bundling `ws`
   breaks frame masking) and sets `eslint.ignoreDuringBuilds`, so `pnpm build` will
   not fail on lint — run `pnpm lint` separately.
