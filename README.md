@@ -64,25 +64,28 @@ DATABASE_URL="postgresql://user:password@host:5432/molten?schema=public"
 
 ## Vercel Deployment
 
-1. Push to GitHub
-2. Import project in [Vercel](https://vercel.com)
-3. Set `DATABASE_URL` in Environment Variables (use Neon or Supabase)
-4. Deploy
+1. Push to GitHub (already connected to Vercel at `molten-v2.vercel.app`)
+2. In [Vercel Project Settings → Environment Variables](https://vercel.com/johnprol390-4731s-projects/molten-v2/settings/environment-variables), add:
+   - `DATABASE_URL` — your Neon or Supabase PostgreSQL connection string (required for Production + Preview)
+3. Redeploy from the Vercel dashboard (or push a new commit)
+4. Seed the production database once:
 
-Live updates are driven by client-side polling and SSE while users are on the site — no Vercel cron required.
-
-After first deploy, run the seed script locally against your production DB:
 ```bash
-DATABASE_URL="your-production-url" pnpm db:seed
+DATABASE_URL="your-production-url" pnpm db:push && pnpm db:seed
 ```
 
 ### Vercel Settings
 
+- **Production URL:** https://molten-v2.vercel.app
 - **Framework Preset:** Next.js
-- **Build Command:** `pnpm build` (default)
-- **Install Command:** `pnpm install` (default)
-- **Output Directory:** `.next` (default)
+- **Install Command:** `pnpm install --no-frozen-lockfile` (set in `vercel.json`)
+- **Build Command:** `prisma generate && next build`
 - **Node.js Version:** 18.x or 20.x
+- **Note:** No cron jobs (Hobby plan). Live sim ticks use client polling + SSE.
+
+### Troubleshooting
+
+If deploy fails with a cron error, ensure `vercel.json` has no `crons` block. Hobby accounts cannot use per-minute crons.
 
 ## Project Structure
 
