@@ -69,7 +69,7 @@ DATABASE_URL="postgresql://user:password@host:5432/molten?schema=public"
 3. Set `DATABASE_URL` in Environment Variables (use Neon or Supabase)
 4. Deploy
 
-The `vercel.json` includes a cron job that runs `/api/sim/tick` every minute to advance the simulation engine.
+The optional `vercel.json` cron runs `/api/sim/tick` once daily on Hobby plans. While users are on the site, client polling and SSE keep the simulation live.
 
 After first deploy, run the seed script locally against your production DB:
 ```bash

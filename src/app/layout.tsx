@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { SimTickProvider } from "@/components/providers/sim-tick-provider";
 import { Navbar } from "@/components/layout/navbar";
 import { LiveTicker } from "@/components/layout/live-ticker";
 import { Footer } from "@/components/layout/footer";
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.className} min-h-screen flex flex-col`}>
         <QueryProvider>
+          <SimTickProvider />
           <Navbar />
           <LiveTicker />
           <main className="flex-1">{children}</main>
