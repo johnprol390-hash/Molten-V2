@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  username      String?
+  avatar        String?
+  bio           String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  tokens        Token[]
+  comments      Comment[]
+  followers     Follow[] @relation("Following")
+  following     Follow[] @relation("Follower")
+  notifications Notification[]
+
+  @@index([walletAddress])
+}
+
+model Token {
+  id              String   @id @default(cuid())
+  contractAddress String   @unique
+  name            String
+  ticker          String
+  description     String
+  imageUrl        String
+  website         String?
+  twitter         String?
+  telegram        String?
+  creatorId       String
+  creator         User     @relation(fields: [creatorId], references: [id])
+
+  marketCap       Float    @default(0)
+  price           Float    @default(0)
+  bondingProgress Float    @default(0)
+  holderCount     Int      @default(1)
+  replyCount      Int      @default(0)
+  trendingScore   Float    @default(0)
+  volume24h       Float    @default(0)
+  change24h       Float    @default(0)
+  change1h        Float    @default(0)
+  change6h        Float    @default(0)
+  isGraduated     Boolean  @default(false)
+  graduatedAt     DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  candles         Candle[]
+  comments        Comment[]
+  activities      Activity[]
+  holders         Holder[]
+
+  @@index([createdAt])
+  @@index([trendingScore])
+  @@index([bondingProgress])
+  @@index([isGraduated])
+  @@index([marketCap])
+}
+
+model Candle {
+  id        String   @id @default(cuid())
+  tokenId   String
+  token     Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  timeframe String
+  timestamp DateTime
+  open      Float
+  high      Float
+  low       Float
+  close     Float
+  volume    Float    @default(0)
+
+  @@unique([tokenId, timeframe, timestamp])
+  @@index([tokenId, timeframe, timestamp])
+}
+
+model Comment {
+  id        String    @id @default(cuid())
+  tokenId   String
+  token     Token     @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  parentId  String?
+  parent    Comment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+  content   String
+  imageUrl  String?
+  createdAt DateTime  @default(now())
+
+  @@index([tokenId, createdAt])
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  follower    User     @relation("Follower", fields: [followerId], references: [id])
+  followingId String
+  following   User     @relation("Following", fields: [followingId], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model EmailCapture {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  tokenId   String?
+  source    String   @default("trading_waitlist")
+  createdAt DateTime @default(now())
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  tokenId   String
+  token     Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  type      String
+  amount    Float
+  price     Float
+  wallet    String
+  createdAt DateTime @default(now())
+
+  @@index([tokenId, createdAt])
+}
+
+model Holder {
+  id        String  @id @default(cuid())
+  tokenId   String
+  token     Token   @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  wallet    String
+  balance   Float
+  percentage Float
+  isDev     Boolean @default(false)
+  isEarly   Boolean @default(false)
+
+  @@unique([tokenId, wallet])
+  @@index([tokenId, balance])
+}
+
+model TickerEvent {
+  id        String   @id @default(cuid())
+  type      String
+  message   String
+  tokenId   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
